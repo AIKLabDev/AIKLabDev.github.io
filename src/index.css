@@ -1,1 +1,89 @@
 @import 'tailwindcss';
+
+/* ------------------------------------------------------------------
+   AIKOREA 채용 사이트 디자인 토큰
+   팔레트는 로고의 남색 → 밝은 파랑 그라데이션에서 뽑았다.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-ink-950: #05101f;
+  --color-ink-900: #0a1628;
+  --color-ink-800: #0f2444;
+  --color-ink-700: #163561;
+
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dbe7ff;
+  --color-brand-200: #bcd2ff;
+  --color-brand-300: #8fb3ff;
+  --color-brand-400: #5c8bfa;
+  --color-brand-500: #2f63ea;
+  --color-brand-600: #1b4fa8;
+  --color-brand-700: #17408a;
+  --color-brand-800: #143270;
+  --color-brand-900: #0f2b5b;
+
+  /* 로고의 밝은 대각선 파랑 — 강조/포인트 전용 */
+  --color-accent-400: #38bdf8;
+  --color-accent-500: #17a8e8;
+  --color-accent-600: #0e86bd;
+
+  --color-page: #f7f9fc;
+
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --shadow-card: 0 1px 2px rgb(10 22 40 / 0.04), 0 8px 24px -12px rgb(10 22 40 / 0.12);
+  --shadow-card-lg: 0 2px 4px rgb(10 22 40 / 0.05), 0 24px 48px -20px rgb(10 22 40 / 0.22);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* sticky 헤더 높이만큼 앵커 오프셋 */
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-page font-sans text-ink-900 antialiased;
+    word-break: keep-all; /* 한글 단어 중간 줄바꿈 방지 */
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  ::selection {
+    @apply bg-brand-500/20;
+  }
+}
+
+@layer utilities {
+  /* 본문 최대 폭 컨테이너 */
+  .container-page {
+    @apply mx-auto w-full max-w-[1200px] px-5 sm:px-8;
+  }
+
+  /* 섹션 상단의 작은 영문 라벨 */
+  .eyebrow {
+    @apply text-xs font-bold tracking-[0.16em] text-brand-600 uppercase;
+  }
+
+  .eyebrow-on-dark {
+    @apply text-xs font-bold tracking-[0.16em] text-accent-400 uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

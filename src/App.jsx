@@ -1,28 +1,26 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
+import Footer from './components/Footer'
+import Header from './components/Header'
+import Home from './pages/Home'
+import JobDetail from './pages/JobDetail'
 
-function Home() {
-  return <h1 className="text-2xl font-semibold">채용 홈</h1>
-}
-
-function Jobs() {
-  return <h1 className="text-2xl font-semibold">공고 목록</h1>
-}
-
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
-      <nav className="flex gap-4 border-b p-4">
-        <Link to="/">홈</Link>
-        <Link to="/jobs">공고</Link>
-      </nav>
-      <main className="p-4">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-100 focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        본문으로 건너뛰기
+      </a>
+      <Header />
+      <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs/:jobId" element={<JobDetail />} />
         </Routes>
       </main>
+      <Footer />
     </BrowserRouter>
   )
 }
-
-export default App
