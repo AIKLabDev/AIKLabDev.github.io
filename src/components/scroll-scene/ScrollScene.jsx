@@ -101,12 +101,38 @@ function ScrollCanvas() {
    * 한 번 틀렸다). 그래서 떠날 때 위치를 우리가 적어두고 그걸 본다.
    */
   const [showLoader] = useState(() => readLastScroll() < window.innerHeight * 0.5)
+
+  /**
+   * 페이지를 떠날 때 위치를 적어두고, 캔버스를 감춘다.
+   *
+   * 캔버스를 감추는 쪽은 새로고침 순간 흰 화면이 번쩍이는 것 때문이다.
+   * 아직 로딩 중일 때 새로고침하면 번쩍이지 않고 로딩이 끝난 뒤에만 번쩍이는데,
+   * 그 차이가 곧 "살아 있는 WebGL 캔버스가 있느냐" 다. 컨텍스트가 정리될 때
+   * 합성기에 남는 빈 레이어로 보인다.
+   *
+   * 감추면 바로 아래 어두운 층(chrome 의 bg-ink-950)이 드러난다.
+   * 다만 브라우저가 pagehide 뒤에 한 프레임을 더 그려준다는 보장은 없어서,
+   * 이것만으로 확실히 사라진다고 말할 수는 없다.
+   *
+   * 뒤로가기로 되살아날 때(BFCache)를 위해 pageshow 에서 되돌린다 —
+   * 안 되돌리면 캔버스가 감춰진 채로 복원된다.
+   */
   useEffect(() => {
-    const save = () => writeLastScroll(window.scrollY)
-    window.addEventListener('pagehide', save)
+    const canvasStyle = (visibility) => {
+      const canvas = sticky.current?.querySelector('canvas')
+      if (canvas) canvas.style.visibility = visibility
+    }
+    const onHide = () => {
+      writeLastScroll(window.scrollY)
+      canvasStyle('hidden')
+    }
+    const onShow = () => canvasStyle('')
+    window.addEventListener('pagehide', onHide)
+    window.addEventListener('pageshow', onShow)
     return () => {
-      save()
-      window.removeEventListener('pagehide', save)
+      writeLastScroll(window.scrollY)
+      window.removeEventListener('pagehide', onHide)
+      window.removeEventListener('pageshow', onShow)
     }
   }, [])
 
