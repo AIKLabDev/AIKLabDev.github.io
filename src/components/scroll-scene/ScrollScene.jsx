@@ -2,6 +2,7 @@ import { AdaptiveDpr, PerformanceMonitor, Preload } from '@react-three/drei'
 import { Canvas, invalidate } from '@react-three/fiber'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import {
+  ASSIGNED_VARIANTS,
   DEFAULT_VARIANT,
   EXPERIMENT_ID,
   VARIANT_PARAM,
@@ -64,6 +65,7 @@ function ScrollCanvas() {
       param: VARIANT_PARAM,
       storageKey: VARIANT_STORAGE_KEY,
       defaultKey: DEFAULT_VARIANT,
+      pool: ASSIGNED_VARIANTS,
     }),
   )
   const variantKey = assignment.variant

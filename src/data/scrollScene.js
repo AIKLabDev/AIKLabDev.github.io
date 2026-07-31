@@ -199,7 +199,18 @@ export const sceneConfig = {
 export const EXPERIMENT_ID = 'hero_scroll_snap'
 export const VARIANT_PARAM = 'hero' // ?hero=flow / ?hero=snap 으로 강제 지정
 export const VARIANT_STORAGE_KEY = 'aikorea.hero.variant'
-export const DEFAULT_VARIANT = 'flow'
+export const DEFAULT_VARIANT = 'snap'
+
+/**
+ * 무작위 배정에 참여하는 변형.
+ *
+ * **원소가 하나면 실험이 꺼지고 그 변형이 전원 기본값이 된다.**
+ * 지금은 전환 지표가 붙어 있지 않아 갈라봐야 데이터가 쌓이지 않는다. 그래서
+ * snap 전원 배포로 두고, flow 는 ?hero=flow 로 비교할 때만 연다.
+ *
+ * 전환 지표를 붙인 뒤 실험을 재개하려면 ['flow', 'snap'] 으로 되돌리면 된다.
+ */
+export const ASSIGNED_VARIANTS = ['snap']
 
 /**
  * 무엇을 비교하는가:
