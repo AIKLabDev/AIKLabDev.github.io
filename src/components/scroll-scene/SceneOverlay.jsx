@@ -94,7 +94,7 @@ export default function SceneOverlay({ subscribe, sections, showSectionActions =
               </div>
             )}
 
-            {/* 섹션별 보조 링크 — 변형 B 에서만 (web.auto 는 스텝마다 링크를 준다) */}
+            {/* 섹션별 보조 링크 — 서사 중간에도 빠져나갈 지점을 준다 */}
             {showSectionActions && !s.actions && s.action && (
               <a
                 href={s.action.href}

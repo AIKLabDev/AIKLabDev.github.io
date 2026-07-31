@@ -9,7 +9,7 @@ const isTypingTarget = (el) =>
   !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName ?? ''))
 
 /**
- * 한 번의 입력에 한 섹션씩 넘어가는 스크롤 스냅 (web.auto 방식).
+ * 한 번의 입력에 한 섹션씩 넘어가는 스크롤 스냅.
  *
  * 구현 자체는 단순하다 — 입력을 가로채고, 잠그고, 다음 섹션 위치로 애니메이션하고,
  * 끝나면 푼다. 실제로 어려운 건 아래 네 가지이고 전부 여기서 처리한다.
