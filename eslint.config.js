@@ -4,7 +4,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import globals from 'globals'
 
 export default [
-  { ignores: ['dist'] },
+  // public/draco 는 three 배포본을 그대로 복사한 서드파티 디코더라 린트 대상이 아니다
+  { ignores: ['dist', 'public/draco'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
