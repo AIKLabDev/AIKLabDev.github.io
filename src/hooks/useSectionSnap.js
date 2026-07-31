@@ -1,19 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { sceneConfig } from '../data/scrollScene'
 import { tune } from '../lib/devTuning'
+import { isWheelContinuation } from '../lib/gesture'
 import { clamp } from '../lib/math'
 
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 const isTypingTarget = (el) =>
   !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName ?? ''))
-
-/**
- * 관성으로 볼 이벤트 간격(ms).
- * 트랙패드 관성은 프레임 단위(10~16ms)로 쏟아지고, 사람이 휠을 굴리는 간격은
- * 보통 80ms 이상이다. 이 값보다 촘촘하면 "아직 손을 뗀 뒤 흘러나오는 입력"으로 본다.
- */
-const MOMENTUM_GAP_MS = 60
 
 /** 애니메이션 시작 직후 중단 판정을 미루는 시간(ms) — 잔여 관성 흡수용 */
 const ABORT_GRACE_MS = 180
@@ -70,6 +64,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
     const maxQuietMs = tune('snapMaxQuiet', sceneConfig.snap.maxQuietMs)
     const reentryMs = tune('snapReentry', sceneConfig.snap.reentryMs)
+    const continuationGapMs = tune('snapContinuation', sceneConfig.snap.continuationGapMs)
     const { touchThreshold } = sceneConfig.snap
 
     /**
@@ -221,15 +216,8 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       return true
     }
 
-    /**
-     * 잠긴 동안 들어온 입력 처리.
-     * 관성으로 보이면(직전 입력과 촘촘하면) 해제를 조금 미루되, 하드 상한은 넘지 않는다.
-     */
-    const holdIfMomentum = (now) => {
-      if (now - lastInputAt.current < MOMENTUM_GAP_MS) {
-        cooldownUntil.current = Math.min(now + quietMs, cooldownHardUntil.current)
-      }
-    }
+    /** 직전 휠 이벤트 — 같은 동작의 연속인지 판정하는 근거 (lib/gesture) */
+    const prevWheel = { mag: 0, at: 0 }
 
     /**
      * 관성으로 되돌아오는 것을 잡아 세운다.
@@ -302,17 +290,25 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const onWheel = (e) => {
       if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
-      if (!inRegion()) return
 
       const now = performance.now()
-      if (isLocked()) {
-        e.preventDefault()
-        holdIfMomentum(now)
-        lastInputAt.current = now
-        return
-      }
+      const mag = Math.abs(e.deltaY)
+      const continuation = isWheelContinuation(mag, now, prevWheel, continuationGapMs)
+      // 히어로 밖에서 들어오는 도중의 이벤트도 기억해야, 진입 순간이 같은 동작의
+      // 연속인지 알 수 있다.
+      prevWheel.mag = mag
+      prevWheel.at = now
+
+      if (!inRegion()) return
+
+      const dir = e.deltaY > 0 ? 1 : -1
+      if (resolveTarget(dir) === -1) return // 양 끝 — 네이티브로 빠져나간다
+
+      e.preventDefault()
+      if (continuation || isLocked()) return
+
       lastInputAt.current = now
-      if (advance(e.deltaY > 0 ? 1 : -1)) e.preventDefault()
+      advance(dir)
     }
 
     const onKeyDown = (e) => {
