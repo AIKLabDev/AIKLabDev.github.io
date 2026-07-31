@@ -1,6 +1,6 @@
 import { AdaptiveDpr, PerformanceMonitor, Preload } from '@react-three/drei'
 import { Canvas, invalidate } from '@react-three/fiber'
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   ASSIGNED_VARIANTS,
   DEFAULT_VARIANT,
@@ -47,11 +47,21 @@ const VARIANT_KEYS = Object.keys(heroVariants)
 export default function ScrollScene() {
   const reduced = useReducedMotion()
   const [webgl] = useState(isWebGLAvailable)
+  const fallback = reduced || !webgl
+
+  /**
+   * 정적 히어로에는 3D 서사가 없으니 헤더를 평소대로 되돌린다.
+   * 헤더의 초기값은 "히어로 경로면 감춤" 이라, 그대로 두면 메뉴가 계속 감춰져 있다.
+   * 페인트 전에 돌려놔야 반대 방향 번쩍임이 생기지 않는다.
+   */
+  useLayoutEffect(() => {
+    if (fallback) setHeroReveal(1)
+  }, [fallback])
 
   // 모션 저감 사용자 / WebGL 미지원 → 기존 정적 히어로를 그대로 재사용한다.
   // 3D 훅이 아예 실행되지 않도록 캔버스는 별도 컴포넌트로 갈라 둔다.
   // 이 사용자들은 실험 대상이 아니므로 변형 배정도, 노출 보고도 하지 않는다.
-  if (reduced || !webgl) return <Hero />
+  if (fallback) return <Hero />
 
   return <ScrollCanvas />
 }

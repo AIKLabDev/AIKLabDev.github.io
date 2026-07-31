@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { nav, site } from '../data/site'
 import { mixHex } from '../lib/color'
-import { subscribeHeroReveal } from '../lib/heroChrome'
+import { getHeroReveal, subscribeHeroReveal } from '../lib/heroChrome'
 import Icon from './Icon'
 import { Button } from './ui'
 
@@ -21,7 +21,9 @@ export default function Header() {
   const chromeRef = useRef(null) // 메뉴 + CTA + 햄버거
   const logoLightRef = useRef(null) // 어두운 배경용 흰 로고 레이어
   const dividerRef = useRef(null)
-  const revealRef = useRef(1)
+  /** 첫 페인트부터 맞는 상태로 그린다. effect 로 감추면 새로고침마다 메뉴가 번쩍인다. */
+  const [initialReveal] = useState(getHeroReveal)
+  const revealRef = useRef(initialReveal)
   /** 키보드 포커스가 헤더 안에 있으면 무조건 드러낸다 — 안 보이는 곳으로 포커스가 가면 안 된다 */
   const focusedRef = useRef(false)
 
@@ -91,6 +93,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
+      style={initialReveal < 1 ? { backgroundColor: `rgba(255, 255, 255, ${initialReveal})`, boxShadow: 'none' } : undefined}
       className={`sticky top-0 z-50 transition-shadow duration-200 ${
         scrolled ? 'bg-white/90 shadow-sm backdrop-blur-md' : 'bg-white'
       }`}
@@ -106,6 +109,7 @@ export default function Header() {
               src="/brand/aikorea-logo.png"
               alt=""
               aria-hidden="true"
+              style={{ opacity: 1 - initialReveal }}
               className="absolute inset-0 h-7 w-auto brightness-0 invert lg:h-8"
             />
           </span>
@@ -118,7 +122,11 @@ export default function Header() {
           </span>
         </Link>
 
-        <div ref={chromeRef} className="flex flex-1 items-center justify-end gap-6">
+        <div
+          ref={chromeRef}
+          style={{ opacity: initialReveal, pointerEvents: initialReveal > 0.6 ? undefined : 'none' }}
+          className="flex flex-1 items-center justify-end gap-6"
+        >
         <nav className="hidden items-center gap-1 lg:flex" aria-label="주요 섹션">
           {nav.map((item) => (
             <a
