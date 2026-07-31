@@ -40,11 +40,28 @@
     />
     <meta property="og:image" content="/media/hero-forklift.jpg" />
 
+    <!--
+      본문 폰트. rel="stylesheet" 로 두면 렌더 차단이라, 이 CDN 응답이 올 때까지
+      브라우저가 첫 페인트를 아예 하지 않는다 — 바로 위에서 배경을 어둡게 잡아놔도
+      그동안은 그려지지 않아 화면이 백지로 남는다. 새로고침 때 0.3초 가까이 흰
+      화면이 뜨던 것이 이것이었다(3D 없는 /jobs 페이지에서도 똑같이 났다).
+
+      preload 로 받아 로드 후 stylesheet 로 승격시키면 차단이 풀린다. 대신 폰트가
+      늦게 붙어 글자가 한 번 바뀌어 보이는데(FOUT), 0.3초 백지보다 낫다고 봤다.
+    -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
-      rel="stylesheet"
+      rel="preload"
+      as="style"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+      onload="this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+      />
+    </noscript>
     <link rel="preload" as="image" href="/media/hero-forklift.jpg" />
   </head>
   <body>
