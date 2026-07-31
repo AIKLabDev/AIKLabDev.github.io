@@ -15,6 +15,9 @@ const isTypingTarget = (el) =>
  */
 const MOMENTUM_GAP_MS = 60
 
+/** 애니메이션 시작 직후 중단 판정을 미루는 시간(ms) — 잔여 관성 흡수용 */
+const ABORT_GRACE_MS = 180
+
 /**
  * 한 번의 입력에 한 섹션씩 넘어가는 스크롤 스냅.
  *
@@ -58,6 +61,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const duration = tune('snapDuration', sceneConfig.snap.duration)
     const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
     const maxQuietMs = tune('snapMaxQuiet', sceneConfig.snap.maxQuietMs)
+    const reentryMs = tune('snapReentry', sceneConfig.snap.reentryMs)
     const { touchThreshold } = sceneConfig.snap
 
     /**
@@ -113,6 +117,25 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     /** 타이머 대신 시각을 비교한다 — 되감기는 타이머가 만든 얼어붙음을 구조적으로 없앤다. */
     const isLocked = () => animating.current || performance.now() < cooldownUntil.current
 
+    /**
+     * 개입 구간 진입 판정 + 재진입 흡수.
+     *
+     * 아래 콘텐츠에서 위로 스크롤해 돌아오면 네이티브 관성이 아직 살아 있다.
+     * 그 상태로 바로 스냅을 걸면 관성이 우리 애니메이션을 밀어내고(중단 가드 발동)
+     * 곧바로 다음 명령이 먹혀 섹션이 주르륵 넘어간다. 들어온 직후 잠깐 잠근다.
+     */
+    let wasInside = false
+    const enterRegion = () => {
+      const inside = inRegion()
+      if (inside && !wasInside) {
+        const now = performance.now()
+        cooldownUntil.current = Math.max(cooldownUntil.current, now + reentryMs)
+        cooldownHardUntil.current = Math.max(cooldownHardUntil.current, now + reentryMs)
+      }
+      wasInside = inside
+      return inside
+    }
+
     const endAnimation = () => {
       animating.current = false
       const now = performance.now()
@@ -132,8 +155,12 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       let expected = null
 
       const step = (now) => {
-        // 다른 주체가 스크롤을 옮겼으면 우리 애니메이션을 포기한다
-        if (expected !== null && Math.abs(window.scrollY - expected) > 2) return endAnimation()
+        // 다른 주체가 스크롤을 옮겼으면 우리 애니메이션을 포기한다.
+        // 다만 초반 유예를 둔다 — 재진입 직후에는 네이티브 관성이 아직 남아 있어서
+        // 유예가 없으면 시작하자마자 중단되고, 그게 연쇄 넘김의 원인이 된다.
+        if (expected !== null && now - start > ABORT_GRACE_MS && Math.abs(window.scrollY - expected) > 2) {
+          return endAnimation()
+        }
 
         const t = Math.min(1, (now - start) / duration)
         // index.css 의 scroll-behavior: smooth 가 걸려 있어 behavior 를 명시하지 않으면
@@ -170,7 +197,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const onWheel = (e) => {
       if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
-      if (!inRegion()) return
+      if (!enterRegion()) return
 
       const now = performance.now()
       if (isLocked()) {
@@ -184,7 +211,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     const onKeyDown = (e) => {
-      if (!inRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
+      if (!enterRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
 
       let dir
       if (e.key === 'ArrowDown' || e.key === 'PageDown') dir = 1
@@ -211,7 +238,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     const onTouchMove = (e) => {
-      if (!inRegion()) return
+      if (!enterRegion()) return
       const t = e.touches[0]
       if (!t) return
 

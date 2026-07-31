@@ -8,9 +8,11 @@ import {
   VARIANT_PARAM,
   VARIANT_STORAGE_KEY,
   heroVariants,
+  sceneConfig,
   scrollModel,
 } from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
+import { clamp } from '../../lib/math'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 import { useSectionSnap } from '../../hooks/useSectionSnap'
 import { reportExposure, resolveVariant } from '../../lib/abTest'
@@ -101,9 +103,31 @@ function ScrollCanvas() {
     return () => io.disconnect()
   }, [])
 
-  // frameloop 이 'never' 인 동안에도 스크롤이 오면 한 프레임은 그리게 한다.
-  // 진행률은 ref 로만 흐르므로 React 리렌더가 없어 R3F 가 스스로 다시 그릴 계기가 없다.
-  useEffect(() => subscribe(() => invalidate()), [subscribe])
+  /**
+   * 마지막 전환에서 3D 를 걷어낸다.
+   *
+   * 장면을 켜둔 채로 다음 콘텐츠가 이어지면 서사가 끊긴 자리가 그대로 드러난다.
+   * 07 -> 08 구간에서 캔버스를 지우면 마지막 섹션은 텍스트+CTA 카드만 남고,
+   * 페이지가 이어질 때 버려지는 것이 없어 이음매가 보이지 않는다.
+   *
+   * CSS transition 을 쓰지 않고 스크롤 값에서 직접 계산한다 — 되감을 때도
+   * 정확히 대칭이어야 하고, transition 은 스크롤을 따라오지 못한다.
+   */
+  const canvasWrap = useRef(null)
+  useEffect(
+    () =>
+      subscribe((p) => {
+        // frameloop 이 'never' 인 동안에도 스크롤이 오면 한 프레임은 그리게 한다.
+        // 진행률은 ref 로만 흐르므로 React 리렌더가 없어 R3F 가 다시 그릴 계기가 없다.
+        invalidate()
+
+        const el = canvasWrap.current
+        if (!el) return
+        const { from, to } = sceneConfig.outro
+        el.style.opacity = 1 - clamp((p - from) / (to - from), 0, 1)
+      }),
+    [subscribe],
+  )
 
   return (
     <section
@@ -115,28 +139,30 @@ function ScrollCanvas() {
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">
         {/* 첫 프레임 전까지는 캔버스가 비어 있지만, 섹션 배경이 ink-950 이라
             아직 안 그려진 상태가 그대로 어두운 히어로로 보인다 — 별도 페이드가 필요 없다. */}
-        <Canvas
-          frameloop={inView ? 'always' : 'never'}
-          shadows={!compact}
-          dpr={[1, compact ? 1.25 : 1.75]}
-          performance={{ min: 0.5 }}
-          gl={{ antialias: !compact, powerPreference: 'high-performance' }}
-          camera={{
-            fov: cameraPath.firstKeyframe.fov,
-            near: 0.1,
-            far: 120,
-            position: cameraPath.firstKeyframe.position,
-          }}
-        >
-          <PerformanceMonitor />
-          <AdaptiveDpr pixelated />
-          <Suspense fallback={null}>
-            <SceneStage compact={compact} />
-            <Subject progress={progress} sections={sections} />
-            <Preload all />
-          </Suspense>
-          <CameraRig progress={progress} path={cameraPath} compact={compact} />
-        </Canvas>
+        <div ref={canvasWrap} className="absolute inset-0">
+          <Canvas
+            frameloop={inView ? 'always' : 'never'}
+            shadows={!compact}
+            dpr={[1, compact ? 1.25 : 1.75]}
+            performance={{ min: 0.5 }}
+            gl={{ antialias: !compact, powerPreference: 'high-performance' }}
+            camera={{
+              fov: cameraPath.firstKeyframe.fov,
+              near: 0.1,
+              far: 120,
+              position: cameraPath.firstKeyframe.position,
+            }}
+          >
+            <PerformanceMonitor />
+            <AdaptiveDpr pixelated />
+            <Suspense fallback={null}>
+              <SceneStage compact={compact} />
+              <Subject progress={progress} sections={sections} />
+              <Preload all />
+            </Suspense>
+            <CameraRig progress={progress} path={cameraPath} compact={compact} />
+          </Canvas>
+        </div>
 
         {/* 텍스트 가독성용 그라데이션 — 3D 위에 얹는다 */}
         <div
