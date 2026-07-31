@@ -1,13 +1,14 @@
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { scrollModel, scrollSections } from '../../data/scrollScene'
+import { scrollModel } from '../../data/scrollScene'
 import { clamp, lerp, rangeProgress } from '../../lib/math'
 
 /**
  * 실제 glTF(.glb) 모델 + 스크롤 스크럽 재생.
  * scrollModel.path 가 채워졌을 때만 ScrollScene 이 이 컴포넌트를 쓴다.
- * Draco/meshopt 압축은 useGLTF 인자로 처리한다 (디코더는 public/draco).
+ * 압축은 useGLTF 인자로 처리한다 — 기본은 meshopt(디코더 번들 내장),
+ * Draco 를 쓰면 scrollModel.draco 에 '/draco/' 를 넣는다.
  */
 
 // 라우팅 진입 전에 미리 받아 두면 히어로가 늦게 뜨는 것을 줄일 수 있다
@@ -15,17 +16,21 @@ if (scrollModel.path) {
   useGLTF.preload(scrollModel.path, scrollModel.draco, scrollModel.meshopt)
 }
 
-/** 진행률 → 클립 재생 시각(초). data/scrollScene.js 의 animation 설정을 해석한다. */
-function secondsFor(p) {
+/**
+ * 진행률 → 클립 재생 시각(초). data/scrollScene.js 의 animation 설정을 해석한다.
+ * segments 모드는 섹션 경계에 맞춰야 하므로 계산된 섹션 목록을 받는다
+ * (변형마다 섹션 길이가 달라 구간이 달라진다).
+ */
+function secondsFor(p, sections) {
   const a = scrollModel.animation
   if (!a) return 0
 
-  if (a.mode === 'segments' && a.segments?.length) {
+  if (a.mode === 'segments' && a.segments?.length && sections?.length) {
     // 현재 진행률이 속한 섹션을 찾아 그 섹션에 배정된 시간 구간을 재생한다
-    let i = scrollSections.findIndex((s) => p <= s.range[1])
-    if (i === -1) i = scrollSections.length - 1
+    let i = sections.findIndex((s) => p <= s.range[1])
+    if (i === -1) i = sections.length - 1
     const seg = a.segments[Math.min(i, a.segments.length - 1)]
-    const s = scrollSections[i]
+    const s = sections[i]
     return lerp(seg[0], seg[1], rangeProgress(p, s.range[0], s.range[1]))
   }
 
@@ -33,7 +38,7 @@ function secondsFor(p) {
   return lerp(from, to, clamp(p, 0, 1))
 }
 
-export default function SceneModel({ progress }) {
+export default function SceneModel({ progress, sections }) {
   const group = useRef(null)
   const { scene, animations } = useGLTF(scrollModel.path, scrollModel.draco, scrollModel.meshopt)
   const { actions, mixer, names } = useAnimations(animations, group)
@@ -66,7 +71,7 @@ export default function SceneModel({ progress }) {
     if (!mixer || !actions[clipName]) return
     // useAnimations 내부에도 mixer.update(delta) 가 있지만,
     // 이 useFrame 이 나중에 등록되어 뒤에 실행되므로 절대 시각인 이쪽이 최종 결과가 된다.
-    mixer.setTime(secondsFor(progress.current))
+    mixer.setTime(secondsFor(progress.current, sections))
   })
 
   return (

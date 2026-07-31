@@ -1,4 +1,3 @@
-import { scrollSections } from '../../data/scrollScene'
 import { clamp, lerp, smoothstep } from '../../lib/math'
 
 /**
@@ -13,45 +12,50 @@ const FRAME_BY_ALIGN = {
 }
 
 /**
- * 각 섹션 구간의 중앙을 카메라 키프레임으로 삼는다.
- * 섹션 텍스트가 완전히 떠 있는 순간에 카메라도 그 구도에 도달한다.
+ * 섹션 목록에서 카메라 경로를 만든다.
+ * 각 섹션 구간의 중앙(at)이 키프레임이고, 그 사이는 smoothstep 보간된다.
+ * 섹션 길이는 변형마다 다르므로 경로도 변형마다 만들어진다.
  */
-const keyframes = scrollSections.map((s) => ({
-  at: (s.range[0] + s.range[1]) / 2,
-  position: s.camera.position,
-  target: s.camera.target,
-  fov: s.camera.fov,
-  // camera.frame 으로 섹션별 직접 지정도 가능하다
-  frame: s.camera.frame ?? FRAME_BY_ALIGN[s.align] ?? [0, 0],
-}))
+export function createCameraPath(sections) {
+  const keyframes = sections.map((s) => ({
+    at: s.at,
+    position: s.camera.position,
+    target: s.camera.target,
+    fov: s.camera.fov,
+    // camera.frame 으로 섹션별 직접 지정도 가능하다
+    frame: s.camera.frame ?? FRAME_BY_ALIGN[s.align] ?? [0, 0],
+  }))
 
-export const firstKeyframe = keyframes[0]
-
-/** 매 프레임 할당을 피하려고 재사용 객체를 만들어 쓴다. */
-export const createCameraSample = () => ({
-  position: [...firstKeyframe.position],
-  target: [...firstKeyframe.target],
-  fov: firstKeyframe.fov,
-  frame: [...firstKeyframe.frame],
-})
-
-/** 진행률 p 에서의 카메라 상태를 out 에 채운다. 키프레임 밖은 양 끝에서 고정된다. */
-export function sampleCamera(p, out) {
+  const first = keyframes[0]
   const n = keyframes.length
-  let i = 0
-  while (i < n - 2 && p > keyframes[i + 1].at) i++
 
-  const a = keyframes[i]
-  const b = keyframes[Math.min(i + 1, n - 1)]
-  const span = b.at - a.at
-  const t = smoothstep(span <= 0 ? 0 : clamp((p - a.at) / span, 0, 1))
+  /** 매 프레임 할당을 피하려고 재사용 객체를 만들어 쓴다. */
+  const createSample = () => ({
+    position: [...first.position],
+    target: [...first.target],
+    fov: first.fov,
+    frame: [...first.frame],
+  })
 
-  for (let k = 0; k < 3; k++) {
-    out.position[k] = lerp(a.position[k], b.position[k], t)
-    out.target[k] = lerp(a.target[k], b.target[k], t)
+  /** 진행률 p 에서의 카메라 상태를 out 에 채운다. 키프레임 밖은 양 끝에서 고정된다. */
+  const sample = (p, out) => {
+    let i = 0
+    while (i < n - 2 && p > keyframes[i + 1].at) i++
+
+    const a = keyframes[i]
+    const b = keyframes[Math.min(i + 1, n - 1)]
+    const span = b.at - a.at
+    const t = smoothstep(span <= 0 ? 0 : clamp((p - a.at) / span, 0, 1))
+
+    for (let k = 0; k < 3; k++) {
+      out.position[k] = lerp(a.position[k], b.position[k], t)
+      out.target[k] = lerp(a.target[k], b.target[k], t)
+    }
+    out.frame[0] = lerp(a.frame[0], b.frame[0], t)
+    out.frame[1] = lerp(a.frame[1], b.frame[1], t)
+    out.fov = lerp(a.fov, b.fov, t)
+    return out
   }
-  out.frame[0] = lerp(a.frame[0], b.frame[0], t)
-  out.frame[1] = lerp(a.frame[1], b.frame[1], t)
-  out.fov = lerp(a.fov, b.fov, t)
-  return out
+
+  return { keyframes, firstKeyframe: first, createSample, sample }
 }

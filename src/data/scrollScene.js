@@ -4,7 +4,8 @@
  * 여기만 고치면 장면이 바뀐다 — 컴포넌트는 이 데이터를 해석만 한다.
  *  - 실제 glTF 모델 교체:  scrollModel.path 를 '/models/xxx.glb' 로
  *  - 애니메이션 타이밍:    scrollModel.animation
- *  - 섹션 개수·문구·카메라: scrollSections (5~8개 권장)
+ *  - 섹션 문구·카메라·길이: scrollSections (5~8개 권장)
+ *  - A/B 변형 정의:        heroVariants
  */
 
 /* ------------------------------------------------------------------ */
@@ -20,12 +21,15 @@ export const scrollModel = {
   path: null,
 
   /**
-   * Draco 디코더 경로. public/draco/ 에 three 배포본을 복사해 두었으므로
-   * 외부 CDN 없이 동작한다. (meshopt 디코더는 drei 에 번들돼 별도 설정 불필요)
-   * true 로 두면 drei 기본값인 gstatic CDN 을 쓴다.
+   * 압축 방식.
+   *
+   * meshopt 를 기본으로 둔다 — 디코더가 drei 에 번들돼 있어 추가 파일이 없고,
+   * web.auto 를 비롯한 실사례도 meshopt 단독으로 서비스한다.
+   * Draco 를 쓸 모델이라면 draco 에 '/draco/' 를 넣으면 된다
+   * (디코더는 public/draco 에 이미 복사돼 있어 외부 CDN 없이 동작한다).
    */
-  draco: '/draco/',
   meshopt: true,
+  draco: false,
 
   /** 배치 — 모델마다 원점·스케일이 다르므로 교체 시 여기서 맞춘다. */
   scale: 1,
@@ -68,8 +72,8 @@ export const scrollModel = {
 
 export const sceneConfig = {
   /**
-   * 섹션 하나가 차지하는 스크롤 높이(svh).
-   * 100 이면 한 섹션당 정확히 한 화면. 낮출수록 전체 히어로가 짧아진다.
+   * 변형 A 에서 모든 섹션이 공통으로 쓰는 스크롤 높이(svh).
+   * 변형 B 는 섹션마다 정의된 vh 를 쓴다.
    */
   vhPerSection: 90,
 
@@ -81,6 +85,43 @@ export const sceneConfig = {
 
   /** 섹션 텍스트가 페이드 인/아웃하는 구간 비율(0~0.5). */
   textFade: 0.28,
+
+  /** 건너뛰기 링크가 향하는 곳 — 히어로 바로 다음 섹션. */
+  skipTarget: '#about',
+}
+
+/* ------------------------------------------------------------------ */
+/* A/B 변형                                                            */
+/* ------------------------------------------------------------------ */
+
+export const EXPERIMENT_ID = 'hero_scroll_story'
+export const VARIANT_PARAM = 'hero' // ?hero=B 로 강제 지정
+export const VARIANT_STORAGE_KEY = 'aikorea.hero.variant'
+export const DEFAULT_VARIANT = 'A'
+
+/**
+ * 무엇을 비교하는가:
+ * 7화면이 넘는 스크롤 서사에서, 진행 상황을 알려주고 빠져나갈 길을 주는 것이
+ * 이탈을 줄이는가 늘리는가. (web.auto 는 "Scroll to Explore 03|10 · Skip Features"
+ * 를 항상 띄우고, 스텝마다 개별 CTA 를 붙인다)
+ */
+export const heroVariants = {
+  A: {
+    label: '기준안',
+    description: '균일한 섹션 길이 · 진행 표시 없음 · 마지막 섹션에만 CTA',
+    progressIndicator: false,
+    skipLink: false,
+    perSectionLength: false,
+    sectionActions: false,
+  },
+  B: {
+    label: 'web.auto 형',
+    description: '진행 표시 + 건너뛰기 · 섹션별 스크롤 길이 · 섹션마다 CTA',
+    progressIndicator: true,
+    skipLink: true,
+    perSectionLength: true,
+    sectionActions: true,
+  },
 }
 
 /* ------------------------------------------------------------------ */
@@ -88,9 +129,12 @@ export const sceneConfig = {
 /* ------------------------------------------------------------------ */
 
 /**
- * range: 이 섹션의 텍스트가 살아 있는 전체 진행률(0~1) 구간.
- *        구간들은 순서대로 이어져야 하고, 각 구간의 중앙이 카메라 키프레임 위치가 된다.
- * camera: 그 키프레임에서의 카메라 상태. 키프레임 사이는 smoothstep 보간된다.
+ * vh:     이 섹션이 차지하는 스크롤 높이(svh). 변형 B 에서만 쓰인다.
+ *         진행률 구간(range)은 이 길이들로부터 계산된다 — 손으로 적지 않는다.
+ *         길이와 구간을 따로 적으면 언젠가 반드시 어긋난다.
+ * camera: 그 섹션 한가운데에서의 카메라 상태. 키프레임 사이는 smoothstep 보간된다.
+ * action: 변형 B 에서 섹션마다 노출되는 링크 하나.
+ * actions: 마지막 섹션의 주 CTA 묶음 (변형과 무관하게 항상 노출).
  */
 export const scrollSections = [
   {
@@ -99,8 +143,9 @@ export const scrollSections = [
     title: ['산업 현장의 움직임을', '로봇으로 바꿉니다'],
     body: '에이아이코리아는 산업 설비와 자동화 시스템을 개발해 온 경험을 바탕으로, 물류와 제조 현장에 필요한 로봇 기술을 개발합니다.',
     align: 'left',
-    range: [0.0, 0.125],
+    vh: 100,
     camera: { position: [2.6, 2.1, 8.6], target: [0, 0.95, 0], fov: 42 },
+    action: { label: '회사 알아보기', href: '#about' },
   },
   {
     id: 'autonomy',
@@ -108,8 +153,9 @@ export const scrollSections = [
     title: ['지게차가 스스로', '창고를 다닙니다'],
     body: '후륜 조향 산업 차량의 경로 계획과 주행 제어, LiDAR·카메라·IMU·엔코더를 융합한 위치 추정으로 작업자 조작 없이 이동합니다.',
     align: 'left',
-    range: [0.125, 0.25],
+    vh: 90,
     camera: { position: [-5.6, 1.3, 4.8], target: [0, 0.75, 0], fov: 40 },
+    action: { label: '하는 일 보기', href: '#what-we-do' },
   },
   {
     id: 'perception',
@@ -117,8 +163,10 @@ export const scrollSections = [
     title: ['팔레트를 찾아', '정확히 파고듭니다'],
     body: '3D 비전으로 팔레트의 위치와 자세를 인식하고, 포크 승강 제어를 자율주행과 연동해 센티미터 단위로 도킹합니다.',
     align: 'left',
-    range: [0.25, 0.375],
+    // 근접 디테일 샷 — 오래 붙들 이유가 없다
+    vh: 75,
     camera: { position: [-2.5, 0.85, 4.4], target: [0.1, 0.7, 0.8], fov: 34 },
+    action: { label: '하는 일 보기', href: '#what-we-do' },
   },
   {
     id: 'manipulation',
@@ -126,8 +174,10 @@ export const scrollSections = [
     title: ['화물을 인식하고', '쌓아 올립니다'],
     body: '4축·6축 산업용 로봇의 모션 계획과 제어, 로봇–카메라 좌표계 정합, 혼합 팔레타이징의 적재 순서와 배치를 판단합니다.',
     align: 'right',
-    range: [0.375, 0.5],
+    // 적재 동작이 실제로 일어나는 구간이라 길게 준다
+    vh: 110,
     camera: { position: [5.4, 3.6, 5.2], target: [0, 1.5, 0], fov: 42 },
+    action: { label: '프로젝트 보기', href: '#projects' },
   },
   {
     id: 'simulation',
@@ -135,8 +185,9 @@ export const scrollSections = [
     title: ['현장에 나가기 전에', '가상 환경에서 검증합니다'],
     body: 'NVIDIA Isaac Sim 위에 창고와 설비를 3D로 재현하고, 센서 모델과 제어 응답까지 맞춘 뒤 실물로 이관합니다.',
     align: 'right',
-    range: [0.5, 0.625],
+    vh: 85,
     camera: { position: [8.2, 6.2, -2.6], target: [0, 1.1, 0], fov: 44 },
+    action: { label: '프로젝트 보기', href: '#projects' },
   },
   {
     id: 'fleet',
@@ -144,8 +195,9 @@ export const scrollSections = [
     title: ['여러 대가 동시에 움직이는', '현장을 관제합니다'],
     body: '로봇의 위치와 상태를 실시간으로 확인하고, 미션을 생성해 배차하며, 다수 로봇의 교통과 작업 순서를 조율합니다.',
     align: 'center',
-    range: [0.625, 0.75],
+    vh: 95,
     camera: { position: [0.5, 10.6, 1.5], target: [0, 0.3, 0], fov: 50 },
+    action: { label: '프로젝트 보기', href: '#projects' },
   },
   {
     id: 'team',
@@ -153,8 +205,9 @@ export const scrollSections = [
     title: ['기술을 나누지 않고', '문제를 기준으로 연결합니다'],
     body: '기계 설계, 전장, 로봇 소프트웨어, 인공지능 비전과 관제를 서로 분리된 기술로 보지 않습니다. 현장의 문제에서 출발해 하나의 자동화 시스템으로 완성합니다.',
     align: 'left',
-    range: [0.75, 0.875],
+    vh: 80,
     camera: { position: [-6.2, 3.2, -6.8], target: [0, 1.2, 0], fov: 40 },
+    action: { label: '일하는 방식 보기', href: '#how-we-work' },
   },
   {
     id: 'join',
@@ -162,9 +215,9 @@ export const scrollSections = [
     title: ['이 문제를 함께 풀', '동료를 찾습니다'],
     body: '시뮬레이션에서 검증하고 현장에서 움직이는 일. 로보틱스 엔지니어를 기다립니다.',
     align: 'center',
-    range: [0.875, 1.0],
+    // CTA 를 읽고 누를 시간
+    vh: 110,
     camera: { position: [0, 2.0, 10.6], target: [0, 1.1, 0], fov: 44 },
-    /** 마지막 섹션에만 CTA 를 붙인다. */
     actions: [
       { label: '채용 공고 보기', href: '#positions', variant: 'onDark' },
       { label: '회사 알아보기', href: '#about', variant: 'outlineDark' },

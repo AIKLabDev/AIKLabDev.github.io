@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { sceneConfig, scrollSections } from '../../data/scrollScene'
+import { sceneConfig } from '../../data/scrollScene'
 import { clamp, rangeProgress } from '../../lib/math'
+import Icon from '../Icon'
 import { Button } from '../ui'
 
 /**
@@ -24,26 +25,25 @@ const alignment = {
  * (CameraRig 의 compact 분기와 짝이다). 가운데 정렬 섹션도 같은 이유로 아래에 둔다.
  */
 const placement = {
-  left: 'items-end pb-16 sm:pb-20 md:items-center md:pt-16 md:pb-0',
-  right: 'items-end pb-16 sm:pb-20 md:items-center md:pt-16 md:pb-0',
-  center: 'items-end pb-16 sm:pb-20',
+  left: 'items-end pb-24 sm:pb-28 md:items-center md:pt-16 md:pb-0',
+  right: 'items-end pb-24 sm:pb-28 md:items-center md:pt-16 md:pb-0',
+  center: 'items-end pb-24 sm:pb-28',
 }
 
-export default function SceneOverlay({ subscribe }) {
+export default function SceneOverlay({ subscribe, sections, showSectionActions = false }) {
   const items = useRef([])
-  const hint = useRef(null)
 
   useEffect(
     () =>
       subscribe((p) => {
         const fade = sceneConfig.textFade
-        const last = scrollSections.length - 1
+        const last = sections.length - 1
 
-        for (let i = 0; i < scrollSections.length; i++) {
+        for (let i = 0; i < sections.length; i++) {
           const el = items.current[i]
           if (!el) continue
 
-          const s = scrollSections[i]
+          const s = sections[i]
           const local = rangeProgress(p, s.range[0], s.range[1])
           // 첫 섹션은 들어오는 페이드 없이, 마지막 섹션은 나가는 페이드 없이 — 양 끝이 비지 않게
           const fadeIn = i === 0 ? 1 : local / fade
@@ -55,15 +55,13 @@ export default function SceneOverlay({ subscribe }) {
           // 투명한 섹션이 CTA 클릭을 가로채지 않도록
           el.style.pointerEvents = o > 0.9 ? 'auto' : 'none'
         }
-
-        if (hint.current) hint.current.style.opacity = clamp(1 - p * 22, 0, 1)
       }),
-    [subscribe],
+    [subscribe, sections],
   )
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
-      {scrollSections.map((s, i) => (
+      {sections.map((s, i) => (
         <div
           key={s.id}
           ref={(el) => {
@@ -85,6 +83,7 @@ export default function SceneOverlay({ subscribe }) {
 
             <p className="mt-6 max-w-xl text-[0.9375rem] leading-relaxed text-brand-100/80 sm:text-base">{s.body}</p>
 
+            {/* 마지막 섹션의 주 CTA — 변형과 무관하게 항상 노출 */}
             {s.actions && (
               <div className="mt-9 flex flex-wrap items-center gap-3">
                 {s.actions.map((a) => (
@@ -94,19 +93,22 @@ export default function SceneOverlay({ subscribe }) {
                 ))}
               </div>
             )}
+
+            {/* 섹션별 보조 링크 — 변형 B 에서만 (web.auto 는 스텝마다 링크를 준다) */}
+            {showSectionActions && !s.actions && s.action && (
+              <a
+                href={s.action.href}
+                className="group mt-8 inline-flex items-center gap-2.5 text-sm font-semibold text-white"
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-500/15 ring-1 ring-accent-400/40 transition-colors group-hover:bg-accent-500/30">
+                  <Icon name="arrowRight" className="size-4 text-accent-400" strokeWidth={2} />
+                </span>
+                {s.action.label}
+              </a>
+            )}
           </div>
         </div>
       ))}
-
-      {/* 스크롤 유도 — 첫 화면에서만 보인다 */}
-      <div
-        ref={hint}
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-8 flex flex-col items-center gap-2 text-brand-100/60"
-      >
-        <span className="font-mono text-[0.625rem] tracking-[0.3em] uppercase">Scroll</span>
-        <span className="h-9 w-px animate-pulse bg-gradient-to-b from-accent-400/80 to-transparent" />
-      </div>
     </div>
   )
 }

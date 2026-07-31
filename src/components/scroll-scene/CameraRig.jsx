@@ -3,7 +3,6 @@ import { useRef } from 'react'
 import { Vector3 } from 'three'
 import { sceneConfig } from '../../data/scrollScene'
 import { damp } from '../../lib/math'
-import { createCameraSample, firstKeyframe, sampleCamera } from './cameraPath'
 
 /**
  * 스크롤 진행률 → 카메라 위치·시선·화각.
@@ -14,16 +13,19 @@ import { createCameraSample, firstKeyframe, sampleCamera } from './cameraPath'
  * 카메라는 useThree 로 꺼내지 않고 프레임 콜백의 state 에서 읽는다.
  * 초기 위치·화각은 Canvas 의 camera prop 이 firstKeyframe 으로 이미 세팅하므로
  * 첫 프레임부터 제자리에서 시작한다 (기본 카메라에서 날아오는 현상 없음).
+ *
+ * @param {object} path createCameraPath() 결과 — 섹션 길이가 변형마다 달라서
+ *                      경로도 변형마다 만들어진다
  */
-export default function CameraRig({ progress, compact = false }) {
-  const sample = useRef(createCameraSample())
-  const lookAt = useRef(new Vector3(...firstKeyframe.target))
+export default function CameraRig({ progress, path, compact = false }) {
+  const sample = useRef(path.createSample())
+  const lookAt = useRef(new Vector3(...path.firstKeyframe.target))
 
   useFrame((state, delta) => {
     // 탭 전환 후 복귀 시 delta 가 크게 튀어 카메라가 순간이동하는 것을 막는다
     const dt = Math.min(delta, 0.1)
     const cam = state.camera
-    const s = sampleCamera(progress.current, sample.current)
+    const s = path.sample(progress.current, sample.current)
     const l = sceneConfig.cameraDamping
 
     // 스크롤과 무관한 미세 패럴랙스 — 정지 중에도 장면이 죽어 보이지 않게

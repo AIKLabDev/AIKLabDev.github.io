@@ -1,31 +1,43 @@
 import { AdaptiveDpr, PerformanceMonitor, Preload } from '@react-three/drei'
 import { Canvas, invalidate } from '@react-three/fiber'
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { sceneConfig, scrollModel, scrollSections } from '../../data/scrollScene'
+import {
+  DEFAULT_VARIANT,
+  EXPERIMENT_ID,
+  VARIANT_PARAM,
+  VARIANT_STORAGE_KEY,
+  heroVariants,
+  scrollModel,
+} from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
+import { reportExposure, resolveVariant } from '../../lib/abTest'
 import { isWebGLAvailable } from '../../lib/webgl'
 import Hero from '../Hero'
 import CameraRig from './CameraRig'
-import { firstKeyframe } from './cameraPath'
 import PlaceholderModel from './PlaceholderModel'
 import SceneLoader from './SceneLoader'
 import SceneModel from './SceneModel'
 import SceneOverlay from './SceneOverlay'
+import SceneProgress from './SceneProgress'
 import SceneStage from './SceneStage'
+import ScrollHint from './ScrollHint'
+import { getSectionPlan } from './sectionPlan'
 
 /**
  * 스크롤 연동 3D 히어로.
  *
- * 구조: 높이만 가진 바깥 섹션(N × vhPerSection) + 그 안에 sticky 캔버스.
+ * 구조: 높이만 가진 바깥 섹션 + 그 안에 sticky 캔버스.
  * 페이지 스크롤을 그대로 쓰기 때문에 sticky 헤더, 해시 앵커(/#about),
  * 라우팅이 전부 평소대로 동작한다. (drei ScrollControls 를 쓰지 않는 이유)
  *
- * 장면 내용은 src/data/scrollScene.js 가 정본이다.
+ * 장면 내용은 src/data/scrollScene.js 가 정본이고, A/B 변형은 heroVariants 가
+ * 정의한다. ?hero=A / ?hero=B 로 강제 지정할 수 있다(선택은 저장되어 유지된다).
  */
 
 // 모델 경로는 런타임에 바뀌지 않으므로 모듈 수준에서 한 번만 고른다 (훅 순서 안전)
 const Subject = scrollModel.path ? SceneModel : PlaceholderModel
+const VARIANT_KEYS = Object.keys(heroVariants)
 
 export default function ScrollScene() {
   const reduced = useReducedMotion()
@@ -33,6 +45,7 @@ export default function ScrollScene() {
 
   // 모션 저감 사용자 / WebGL 미지원 → 기존 정적 히어로를 그대로 재사용한다.
   // 3D 훅이 아예 실행되지 않도록 캔버스는 별도 컴포넌트로 갈라 둔다.
+  // 이 사용자들은 실험 대상이 아니므로 변형 배정도, 노출 보고도 하지 않는다.
   if (reduced || !webgl) return <Hero />
 
   return <ScrollCanvas />
@@ -43,6 +56,29 @@ function ScrollCanvas() {
   const sticky = useRef(null)
   const compact = useIsCompact()
   const { progress, subscribe } = useScrollProgress(outer, sticky)
+
+  // 변형은 마운트 때 한 번만 정한다. 도중에 바뀌면 스크롤 높이가 달라져
+  // 보고 있던 위치가 튄다.
+  const [assignment] = useState(() =>
+    resolveVariant(VARIANT_KEYS, {
+      param: VARIANT_PARAM,
+      storageKey: VARIANT_STORAGE_KEY,
+      defaultKey: DEFAULT_VARIANT,
+    }),
+  )
+  const variantKey = assignment.variant
+
+  const { variant, sections, totalVh, cameraPath } = getSectionPlan(variantKey)
+
+  // 3D 가 실제로 렌더되는 사용자만 실험에 넣는다.
+  // ref 로 한 번만 쏜다 — StrictMode 는 개발 중 effect 를 두 번 실행하고,
+  // 노출이 두 번 집계되면 실험 수치가 그대로 망가진다.
+  const reported = useRef(false)
+  useEffect(() => {
+    if (reported.current) return
+    reported.current = true
+    reportExposure(EXPERIMENT_ID, variantKey, { source: assignment.source })
+  }, [variantKey, assignment.source])
 
   // 히어로가 화면 밖으로 나가면 렌더 루프를 멈춘다 —
   // 아래 섹션들을 읽는 동안 GPU 를 계속 태울 이유가 없다.
@@ -66,8 +102,9 @@ function ScrollCanvas() {
   return (
     <section
       ref={outer}
+      data-hero-variant={variantKey}
       className="relative isolate bg-ink-950"
-      style={{ height: `${scrollSections.length * sceneConfig.vhPerSection}svh` }}
+      style={{ height: `${totalVh}svh` }}
     >
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">
         {/* 첫 프레임 전까지는 캔버스가 비어 있지만, 섹션 배경이 ink-950 이라
@@ -78,16 +115,21 @@ function ScrollCanvas() {
           dpr={[1, compact ? 1.25 : 1.75]}
           performance={{ min: 0.5 }}
           gl={{ antialias: !compact, powerPreference: 'high-performance' }}
-          camera={{ fov: firstKeyframe.fov, near: 0.1, far: 120, position: firstKeyframe.position }}
+          camera={{
+            fov: cameraPath.firstKeyframe.fov,
+            near: 0.1,
+            far: 120,
+            position: cameraPath.firstKeyframe.position,
+          }}
         >
           <PerformanceMonitor />
           <AdaptiveDpr pixelated />
           <Suspense fallback={null}>
             <SceneStage compact={compact} />
-            <Subject progress={progress} />
+            <Subject progress={progress} sections={sections} />
             <Preload all />
           </Suspense>
-          <CameraRig progress={progress} compact={compact} />
+          <CameraRig progress={progress} path={cameraPath} compact={compact} />
         </Canvas>
 
         {/* 텍스트 가독성용 그라데이션 — 3D 위에 얹는다 */}
@@ -100,7 +142,15 @@ function ScrollCanvas() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,16,31,0.7)_100%)]"
         />
 
-        <SceneOverlay subscribe={subscribe} />
+        <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions={variant.sectionActions} />
+
+        {/* 진행 표시(B)와 스크롤 유도(A)는 같은 자리를 쓰므로 배타적이다 */}
+        {variant.progressIndicator ? (
+          <SceneProgress subscribe={subscribe} sections={sections} showSkip={variant.skipLink} />
+        ) : (
+          <ScrollHint subscribe={subscribe} />
+        )}
+
         <SceneLoader />
       </div>
     </section>
