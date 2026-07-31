@@ -184,7 +184,15 @@ function ScrollCanvas() {
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">
         {/* 첫 프레임 전까지는 캔버스가 비어 있지만, 섹션 배경이 ink-950 이라
             아직 안 그려진 상태가 그대로 어두운 히어로로 보인다 — 별도 페이드가 필요 없다. */}
-        <div ref={chrome} className="absolute inset-0">
+        {/*
+          bg-ink-950 이 중요하다. 아래 그라데이션들은 어두운 반투명이라 배경이
+          비치는 구조인데, 페이지가 헐리는 프레임처럼 캔버스가 제시되지 않는
+          순간에 뒤가 밝으면 "가운데가 흰 방사형" 으로 번쩍인다(새로고침 때
+          실제로 보였다). 같은 레이어에 불투명한 어두운 바탕을 깔면 그 가능성이
+          구조적으로 사라진다 — 브라우저가 그 순간 무엇을 그리든 상관없어진다.
+          평상시에는 캔버스가 이 위를 덮으므로 보이는 것은 달라지지 않는다.
+        */}
+        <div ref={chrome} className="absolute inset-0 bg-ink-950">
           <Canvas
             frameloop={inView ? 'always' : 'never'}
             shadows={!compact}
