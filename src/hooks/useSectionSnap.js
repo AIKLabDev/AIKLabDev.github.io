@@ -337,11 +337,17 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     /**
      * 시작점 대비 이동량을 한 축으로 접는다. 큰 쪽이 그 스와이프의 축이고,
-     * 양수면 "다음" 이다 — 위로 쓸어올림(dy)과 왼쪽으로 쓸음(dx)이 같은 뜻이 된다.
+     * 양수면 "다음" 이다.
+     *
+     * 두 축의 부호 규칙이 다른 것은 의도다.
+     * 세로는 스크롤 관례를 따른다 — 위로 쓸어올리면 다음. (콘텐츠가 위로 밀린다)
+     * 가로는 손이 간 방향이 곧 진행 방향이다 — 오른쪽으로 쓸면 다음.
+     * 캐러셀 관례(왼쪽으로 쓸면 다음)로 만들었더니 반대로 느껴진다는 지적을 받았고,
+     * 이 편이 키보드 화살표(-> = 다음)와도 맞는다.
      */
     const swipeDelta = (x, y) => {
       const dy = touchY - y
-      const dx = touchX - x
+      const dx = x - touchX
       return Math.abs(dx) > Math.abs(dy) ? dx : dy
     }
 
