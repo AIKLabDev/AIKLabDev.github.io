@@ -67,6 +67,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
     const maxQuietMs = tune('snapMaxQuiet', sceneConfig.snap.maxQuietMs)
     const reentryMs = tune('snapReentry', sceneConfig.snap.reentryMs)
+    const captureDuration = tune('snapCapture', sceneConfig.snap.captureDuration)
     const { touchThreshold } = sceneConfig.snap
 
     /**
@@ -154,11 +155,16 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     /**
      * @param {number} y 목표 스크롤 위치
-     * @param {number} extraLock 끝난 뒤 추가로 잠글 시간(ms).
-     *        관성으로 되돌아온 직후에 쓴다 — 잔여 관성과 이어지는 스와이프가
-     *        곧바로 다음 섹션을 트리거하는 것을 막는다.
+     * @param {object} [opts]
+     * @param {number} [opts.lock] 끝난 뒤 추가로 잠글 시간(ms)
+     * @param {number} [opts.ms] 이동 시간(ms). 생략하면 일반 전환 시간
+     * @param {boolean} [opts.force] 중단 가드를 끈다.
+     *        평소에는 다른 주체(건너뛰기 링크·스크롤바)가 스크롤을 옮기면 양보하지만,
+     *        관성을 붙잡는 중에는 양보하면 안 된다. 관성은 프레임 사이에 계속 스크롤을
+     *        밀어넣으므로, 양보하면 180ms 만에 포기하고 그대로 통과당한다.
      */
-    const animateTo = (y, extraLock = 0) => {
+    const animateTo = (y, { lock: extraLock = 0, ms, force = false } = {}) => {
+      const dur = ms ?? duration
       cancelAnimationFrame(rafId.current)
 
       const from = window.scrollY
@@ -173,11 +179,11 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
         // 다른 주체가 스크롤을 옮겼으면 우리 애니메이션을 포기한다.
         // 다만 초반 유예를 둔다 — 재진입 직후에는 네이티브 관성이 아직 남아 있어서
         // 유예가 없으면 시작하자마자 중단되고, 그게 연쇄 넘김의 원인이 된다.
-        if (expected !== null && now - start > ABORT_GRACE_MS && Math.abs(window.scrollY - expected) > 2) {
+        if (!force && expected !== null && now - start > ABORT_GRACE_MS && Math.abs(window.scrollY - expected) > 2) {
           return endAnimation(extraLock)
         }
 
-        const t = Math.min(1, (now - start) / duration)
+        const t = Math.min(1, (now - start) / dur)
         // index.css 의 scroll-behavior: smooth 가 걸려 있어 behavior 를 명시하지 않으면
         // scrollTo 가 자체 애니메이션을 돌려 이 루프와 싸운다.
         window.scrollTo({ top: from + dist * easeInOutCubic(t), behavior: 'instant' })
@@ -219,11 +225,42 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
      * 그 자리에서 멈춘다.
      */
     let region = null
+    let lastY = window.scrollY
+    let captures = 0
+
+    /**
+     * 터치 기기에서만 "계속 밀림" 재포착을 쓴다.
+     * 데스크톱에는 스크롤바 드래그가 있는데, 그것까지 관성으로 오해하면
+     * 사용자가 드래그하는 내내 우리와 싸우게 된다.
+     */
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false
+
+    const capture = () => {
+      captures += 1
+      // force: 관성에게 양보하지 않는다. 끝까지 덮어써야 멈춘다.
+      animateTo(targetFor(nearestIndex()), { lock: reentryMs, ms: captureDuration, force: true })
+    }
+
     const onScroll = () => {
       const prev = region
       region = regionOf()
-      if (prev === 'below' && region === 'inside' && !animating.current) {
-        animateTo(targetFor(nearestIndex()), reentryMs)
+      const y = window.scrollY
+      const drift = Math.abs(y - lastY)
+      lastY = y
+
+      if (animating.current) return
+
+      // 아래 콘텐츠에서 관성으로 되돌아왔다
+      if (prev === 'below' && region === 'inside') {
+        captures = 0
+        return capture()
+      }
+
+      // 붙잡은 뒤에도 잔여 관성이 계속 밀고 있다면 다시 잡는다.
+      // 입력이 없는데 스크롤만 크게 움직이는 상황 = 관성이다.
+      const noInput = performance.now() - lastInputAt.current > 250
+      if (coarse && region === 'inside' && noInput && drift > 50 && captures > 0 && captures < 4) {
+        capture()
       }
     }
 
