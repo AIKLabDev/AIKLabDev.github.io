@@ -145,7 +145,14 @@ function ScrollCanvas() {
     <section
       ref={outer}
       data-hero-variant={variantKey}
-      className="relative isolate bg-ink-950"
+      /*
+       * -mt 로 헤더 밑까지 끌어올린다.
+       * 헤더는 sticky 라 문서 흐름에서 자리를 차지하는데, 히어로 위에서는 헤더를
+       * 투명하게 만들기 때문에 그대로 두면 최상단에서 투명 헤더 뒤로 페이지 배경
+       * (거의 흰색)이 비친다. 히어로가 헤더 밑에서 시작해야 3D 가 화면 맨 위까지
+       * 이어진다. 헤더 높이(h-16 / lg:h-20)와 짝이므로 한쪽을 바꾸면 같이 바꿔야 한다.
+       */
+      className="relative isolate -mt-16 bg-ink-950 lg:-mt-20"
       style={{ height: `${totalVh}svh` }}
     >
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">

@@ -245,11 +245,20 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     let captures = 0
 
     /**
-     * 터치 기기에서만 "계속 밀림" 재포착을 쓴다.
-     * 데스크톱에는 스크롤바 드래그가 있는데, 그것까지 관성으로 오해하면
-     * 사용자가 드래그하는 내내 우리와 싸우게 된다.
+     * 포인터를 누르고 있는 동안에는 "계속 밀림" 재포착을 하지 않는다.
+     *
+     * 데스크톱 스크롤바 드래그가 관성과 구분되지 않아서 예전에는 터치 기기에서만
+     * 재포착을 켰는데, 그러면 트랙패드 관성이 그대로 통과한다(데스크톱에서 가드가
+     * 안 듣던 이유다). 관성은 손을 뗀 뒤에 일어나므로, "버튼이 눌려 있는가" 로
+     * 정확히 갈린다.
      */
-    const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false
+    let pointerHeld = false
+    const onPointerDown = () => {
+      pointerHeld = true
+    }
+    const onPointerUp = () => {
+      pointerHeld = false
+    }
 
     /**
      * 아래에서 관성으로 되돌아온 것을 경계에 붙여 세운다.
@@ -281,9 +290,11 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
         return capture()
       }
 
-      // 잠금이 풀린 직후에도 잔여 관성이 남아 밀고 있으면 한 번 더 잡는다.
+      // 잠금이 풀린 뒤에도 잔여 관성이 밀고 있으면 다시 잡는다.
+      // 히어로 안에서 입력은 우리가 가로채므로 스크롤이 저절로 움직일 이유가 없다.
+      // 즉 "입력 없이 크게 움직임 + 버튼도 안 눌림" 이면 관성이다.
       const noInput = performance.now() - lastInputAt.current > 250
-      if (coarse && region === 'inside' && noInput && drift > 50 && captures > 0 && captures < 3) {
+      if (region === 'inside' && noInput && !pointerHeld && drift > 50 && captures < 3) {
         capture()
       }
     }
@@ -364,6 +375,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     // passive: false 가 핵심이다. 없으면 preventDefault 가 조용히 무시된다.
     const opts = { passive: false }
     window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
     window.addEventListener('wheel', onWheel, opts)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -372,6 +386,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     return () => {
       window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
       window.removeEventListener('wheel', onWheel, opts)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('touchstart', onTouchStart)
