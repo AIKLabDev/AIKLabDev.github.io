@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import Icon from '../Icon'
 import { sceneConfig } from '../../data/scrollScene'
 import { clamp } from '../../lib/math'
 
@@ -15,6 +16,7 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
   const step = useRef(null)
   const bar = useRef(null)
   const skip = useRef(null)
+  const hint = useRef(null)
 
   useEffect(
     () =>
@@ -34,6 +36,9 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
         // pointer-events-auto 를 명시하고 있어 덮어쓴다 — 링크 자신을 꺼야 한다.
         // visibility 면 탭 순서와 접근성 트리에서도 함께 빠진다.
         if (skip.current) skip.current.style.visibility = p > sceneConfig.outro.from ? 'hidden' : ''
+
+        // 첫 섹션을 넘겼으면 넘기는 법을 아는 것이니 안내를 거둔다
+        if (hint.current) hint.current.style.opacity = p > sections[0].range[1] ? '0' : '1'
       }),
     [subscribe, sections],
   )
@@ -50,6 +55,21 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
       <div className="container-page flex items-center gap-5 pb-6 text-xs sm:gap-7">
         <span className="hidden font-mono tracking-[0.2em] text-brand-100/50 uppercase sm:inline">
           Scroll to Explore
+        </span>
+
+        {/* 좁은 화면 전용 — 위 문구가 숨겨지는 자리를 대신한다.
+            화살표가 아래로 움직여야 세로 스크롤임이 전달된다(정지해 있으면
+            가로 스와이프와 구분되지 않는다). 모션 저감 사용자에겐 멈춰 있다. */}
+        <span
+          ref={hint}
+          className="flex items-center gap-1.5 font-mono tracking-[0.2em] text-brand-100/50 uppercase transition-opacity duration-500 sm:hidden"
+        >
+          Scroll
+          <Icon
+            name="arrowRight"
+            className="size-3.5 rotate-90 motion-safe:animate-[scroll-hint_1.6s_ease-in-out_infinite]"
+            strokeWidth={2}
+          />
         </span>
 
         <span className="font-mono tracking-widest text-brand-100/70" aria-live="polite">

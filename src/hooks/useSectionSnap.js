@@ -30,7 +30,10 @@ const ABORT_GRACE_MS = 180
  *    두 개 생긴다 → keydown·touchmove 도 같이 처리한다.
  * 4) 양 끝(첫 섹션에서 위 / 마지막 섹션에서 아래)에서는 가로채지 않는다.
  *    그래야 히어로 밖으로 정상적으로 빠져나갈 수 있다.
- * 5) ctrl+휠(브라우저 확대)과 가로 스크롤은 우리 것이 아니다. 건드리지 않는다.
+ * 5) 세로·가로 어느 쪽으로 밀어도 다음 장으로 넘어간다. 이 히어로에는 방향을
+ *    알려줄 단서가 거의 없어서(특히 모바일), 둘 다 받으면 사용자가 방향을
+ *    맞힐 필요 자체가 없어진다. 두 축 중 큰 쪽을 그 동작의 세기로 본다.
+ *    ctrl+휠(브라우저 확대)만 우리 것이 아니다.
  * 6) 애니메이션 도중 다른 주체(건너뛰기 링크, 스크롤바 드래그, Home 키)가
  *    스크롤을 옮기면 우리 쪽을 포기한다. 둘이 같은 값을 쓰면 떨린다.
  * 7) 아래 콘텐츠에서 위로 튕겨 올려 되돌아올 때, 관성은 손가락을 뗀 뒤 브라우저가
@@ -289,10 +292,13 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     const onWheel = (e) => {
       if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
+
+      // 두 축 중 큰 쪽이 그 동작이다. 가로로 밀어도 다음 장으로 간다.
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+      if (delta === 0) return
 
       const now = performance.now()
-      const mag = Math.abs(e.deltaY)
+      const mag = Math.abs(delta)
       const continuation = isWheelContinuation(mag, now, prevWheel, continuationGapMs)
       // 히어로 밖에서 들어오는 도중의 이벤트도 기억해야, 진입 순간이 같은 동작의
       // 연속인지 알 수 있다.
@@ -301,7 +307,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
       if (!inRegion()) return
 
-      const dir = e.deltaY > 0 ? 1 : -1
+      const dir = delta > 0 ? 1 : -1
       if (resolveTarget(dir) === -1) return // 양 끝 — 네이티브로 빠져나간다
 
       e.preventDefault()
@@ -315,8 +321,8 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       if (!inRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
 
       let dir
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') dir = 1
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'ArrowRight') dir = 1
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft') dir = -1
       else if (e.key === ' ') dir = e.shiftKey ? -1 : 1
       else return // Home/End/Tab 등은 네이티브 그대로 (탈출 경로를 막지 않는다)
 
@@ -328,6 +334,16 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     let touchY = 0
     let touchX = 0
+
+    /**
+     * 시작점 대비 이동량을 한 축으로 접는다. 큰 쪽이 그 스와이프의 축이고,
+     * 양수면 "다음" 이다 — 위로 쓸어올림(dy)과 왼쪽으로 쓸음(dx)이 같은 뜻이 된다.
+     */
+    const swipeDelta = (x, y) => {
+      const dy = touchY - y
+      const dx = touchX - x
+      return Math.abs(dx) > Math.abs(dy) ? dx : dy
+    }
 
     const onTouchStart = (e) => {
       const t = e.touches[0]
@@ -346,26 +362,26 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       const t = e.touches[0]
       if (!t) return
 
-      const dy = touchY - t.clientY
-      const dx = touchX - t.clientX
-      if (Math.abs(dx) > Math.abs(dy)) return // 가로 우세 — 우리 것이 아니다
+      // 위로 쓸어올리거나(dy) 왼쪽으로 쓸면(dx) 둘 다 "다음" 이다.
+      const d = swipeDelta(t.clientX, t.clientY)
+      if (d === 0) return
 
       // 히어로 밖으로 나가는 방향이면 네이티브에 넘긴다.
       // iOS 는 브라우저가 스크롤을 시작한 뒤의 preventDefault 를 무시하므로
       // 첫 touchmove 에서 결정해야 한다.
-      if (resolveTarget(dy > 0 ? 1 : -1) === -1) return
+      if (resolveTarget(d > 0 ? 1 : -1) === -1) return
 
       e.preventDefault()
     }
 
     const onTouchEnd = (e) => {
       if (!inRegion() || isLocked()) return
-      const y = e.changedTouches[0]?.clientY
-      if (y == null) return
-      const dy = touchY - y
-      if (Math.abs(dy) < touchThreshold) return
+      const t = e.changedTouches[0]
+      if (!t) return
+      const d = swipeDelta(t.clientX, t.clientY)
+      if (Math.abs(d) < touchThreshold) return
       lastInputAt.current = performance.now()
-      advance(dy > 0 ? 1 : -1)
+      advance(d > 0 ? 1 : -1)
     }
 
     // passive: false 가 핵심이다. 없으면 preventDefault 가 조용히 무시된다.
