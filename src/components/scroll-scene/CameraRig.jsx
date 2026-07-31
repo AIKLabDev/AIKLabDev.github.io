@@ -7,6 +7,9 @@ import { damp } from '../../lib/math'
 
 // 개발 중 ?camDamp=6 으로 바로 바꿔볼 수 있다 (프로덕션에서는 상수로 접힌다)
 const DAMPING = tune('camDamp', sceneConfig.cameraDamping)
+// 세로 화면 보정 강도. 실기기에서 ?aspectPow=0.7&maxPull=2.8 로 바로 비교할 수 있다.
+const ASPECT_POW = tune('aspectPow', sceneConfig.framing.aspectExponent)
+const MAX_PULL = tune('maxPull', sceneConfig.framing.maxPullBack)
 
 /**
  * 스크롤 진행률 → 카메라 위치·시선·화각.
@@ -23,6 +26,8 @@ const DAMPING = tune('camDamp', sceneConfig.cameraDamping)
 export default function CameraRig({ progress, path, compact = false }) {
   const sample = useRef(path.createSample())
   const lookAt = useRef(new Vector3(...path.firstKeyframe.target))
+  /** 첫 프레임은 감쇠 없이 제자리에서 시작한다 (세로 화면 보정이 눈에 띄게 밀려드는 것 방지) */
+  const settled = useRef(false)
 
   useFrame((state, delta) => {
     // 탭 전환 후 복귀 시 delta 가 크게 튀어 카메라가 순간이동하는 것을 막는다
@@ -35,13 +40,30 @@ export default function CameraRig({ progress, path, compact = false }) {
     const px = state.pointer.x * sceneConfig.parallax
     const py = state.pointer.y * sceneConfig.parallax
 
-    cam.position.x = damp(cam.position.x, s.position[0] + px, l, dt)
-    cam.position.y = damp(cam.position.y, s.position[1] + py, l, dt)
-    cam.position.z = damp(cam.position.z, s.position[2], l, dt)
+    // 세로 화면 보정: 가로 시야가 좁아진 만큼 카메라를 시선 방향 뒤로 물린다.
+    // 키프레임의 구도(각도)는 그대로 두고 거리만 늘리므로 왜곡이 없다.
+    const { referenceAspect } = sceneConfig.framing
+    const aspect = state.size.width / Math.max(1, state.size.height)
+    const pull =
+      aspect < referenceAspect ? Math.min(Math.pow(referenceAspect / aspect, ASPECT_POW), MAX_PULL) : 1
 
-    lookAt.current.x = damp(lookAt.current.x, s.target[0], l, dt)
-    lookAt.current.y = damp(lookAt.current.y, s.target[1], l, dt)
-    lookAt.current.z = damp(lookAt.current.z, s.target[2], l, dt)
+    const [tx, ty, tz] = s.target
+    const wantX = tx + (s.position[0] - tx) * pull + px
+    const wantY = ty + (s.position[1] - ty) * pull + py
+    const wantZ = tz + (s.position[2] - tz) * pull
+
+    if (settled.current) {
+      cam.position.x = damp(cam.position.x, wantX, l, dt)
+      cam.position.y = damp(cam.position.y, wantY, l, dt)
+      cam.position.z = damp(cam.position.z, wantZ, l, dt)
+      lookAt.current.x = damp(lookAt.current.x, tx, l, dt)
+      lookAt.current.y = damp(lookAt.current.y, ty, l, dt)
+      lookAt.current.z = damp(lookAt.current.z, tz, l, dt)
+    } else {
+      cam.position.set(wantX, wantY, wantZ)
+      lookAt.current.set(tx, ty, tz)
+      settled.current = true
+    }
     cam.lookAt(lookAt.current)
 
     if (Math.abs(cam.fov - s.fov) > 0.01) {
