@@ -54,7 +54,9 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
         {showSkip && (
           <a
             href={sceneConfig.skipTarget}
-            className="pointer-events-auto ml-auto font-semibold text-brand-100/70 underline underline-offset-4 transition-colors hover:text-white"
+            // 모바일에서 제일 필요한 버튼이다. 터치 타겟을 44px 이상으로 확보하되
+            // 음수 마진으로 시각적 위치는 유지한다.
+            className="pointer-events-auto -my-3 ml-auto inline-flex min-h-11 items-center py-3 font-semibold text-brand-100/70 underline underline-offset-4 transition-colors hover:text-white"
           >
             소개 건너뛰기
           </a>

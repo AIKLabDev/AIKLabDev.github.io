@@ -71,10 +71,17 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       return { top: rect.top + window.scrollY, travel: rect.height - viewport }
     }
 
-    /** 히어로가 화면을 잡고 있는 동안에만 개입한다. 밖에서는 평범한 페이지다. */
-    const inHero = () => {
+    /**
+     * 개입 구간: 히어로가 화면에 걸쳐 있고 아직 끝을 지나지 않았을 때.
+     *
+     * 위쪽(헤더 높이만큼 히어로가 아직 고정되지 않은 구간)도 포함한다.
+     * 제외하면 첫 입력 한 번이 네이티브 스크롤로 새어 나가서, 진행률은 안 변하는데
+     * 화면만 조금 밀리는 어중간한 단계가 생긴다.
+     */
+    const inRegion = () => {
       const { top, travel } = metrics()
-      return travel > 0 && window.scrollY >= top - 1 && window.scrollY <= top + travel + 1
+      if (travel <= 0) return false
+      return outer.getBoundingClientRect().top < window.innerHeight && window.scrollY <= top + travel + 1
     }
 
     const progressNow = () => {
@@ -140,8 +147,11 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       rafId.current = requestAnimationFrame(step)
     }
 
+    /** 실행하지 않고 목표만 본다 — 터치는 preventDefault 전에 판단이 필요하다 */
+    const resolveTarget = (dir) => nextIndex(dir)
+
     const advance = (dir) => {
-      const i = nextIndex(dir)
+      const i = resolveTarget(dir)
       if (i === -1) return false // 양 끝 — 네이티브에 넘긴다
       animateTo(targetFor(i))
       return true
@@ -160,7 +170,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const onWheel = (e) => {
       if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
-      if (!inHero()) return
+      if (!inRegion()) return
 
       const now = performance.now()
       if (isLocked()) {
@@ -174,7 +184,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     const onKeyDown = (e) => {
-      if (!inHero() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
+      if (!inRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
 
       let dir
       if (e.key === 'ArrowDown' || e.key === 'PageDown') dir = 1
@@ -189,21 +199,42 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     let touchY = 0
+    let touchX = 0
+    /** 이 제스처가 이미 한 섹션을 소비했는가 — "스와이프 1회 = 1섹션" 을 보장한다 */
+    let gestureUsed = false
+
     const onTouchStart = (e) => {
-      touchY = e.touches[0]?.clientY ?? 0
+      const t = e.touches[0]
+      touchY = t?.clientY ?? 0
+      touchX = t?.clientX ?? 0
+      gestureUsed = false
     }
 
     const onTouchMove = (e) => {
-      if (!inHero()) return
-      e.preventDefault() // 히어로 안에서는 자유 스크롤을 막는다 (스냅의 정의)
-      if (isLocked()) return
+      if (!inRegion()) return
+      const t = e.touches[0]
+      if (!t) return
 
-      const y = e.touches[0]?.clientY ?? touchY
-      const dy = touchY - y
+      const dy = touchY - t.clientY
+      const dx = touchX - t.clientX
+
+      // 가로 우세 제스처는 우리 것이 아니다 (iOS 뒤로가기 엣지 스와이프 포함)
+      if (Math.abs(dx) > Math.abs(dy)) return
+
+      const dir = dy > 0 ? 1 : -1
+      // 히어로 밖으로 나가는 방향이면 네이티브에 넘긴다.
+      // 이 판단을 preventDefault 前에 해야 한다 — iOS 는 브라우저가 스크롤을 시작한
+      // 뒤에 오는 preventDefault 를 무시하므로, 첫 touchmove 에서 결정해야 한다.
+      if (resolveTarget(dir) === -1) return
+
+      e.preventDefault() // 히어로 안에서는 자유 스크롤을 막는다 (스냅의 정의)
+
+      if (gestureUsed || isLocked()) return
       if (Math.abs(dy) < touchThreshold) return
-      touchY = y
+
+      gestureUsed = true
       lastInputAt.current = performance.now()
-      advance(dy > 0 ? 1 : -1)
+      advance(dir)
     }
 
     // passive: false 가 핵심이다. 없으면 preventDefault 가 조용히 무시된다.

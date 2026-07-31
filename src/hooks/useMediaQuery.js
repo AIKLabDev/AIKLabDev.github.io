@@ -23,5 +23,11 @@ export function useMediaQuery(query) {
 /** 모션 저감 사용자 — 3D 장면 대신 정적 히어로를 준다. */
 export const useReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)')
 
-/** 좁은 화면(모바일) — 그림자·픽셀비 등 부하를 줄이는 판단에 쓴다. */
-export const useIsCompact = () => useMediaQuery('(max-width: 767px)')
+/**
+ * 좁은 화면 — 그림자·픽셀비를 줄이고, 텍스트를 하단에 깔고 피사체를 위로 민다.
+ *
+ * 높이 조건이 붙어 있는 이유: 폭만 보면 가로 모드 폰(아이폰 가로 812px)이
+ * 데스크톱으로 잡힌다. 세로 375px 화면에 좌우 배치 텍스트가 들어가면 3D 와 겹친다.
+ * "화면이 좁다" 가 아니라 "여유가 없다" 를 판정해야 한다.
+ */
+export const useIsCompact = () => useMediaQuery('(max-width: 767px), (max-height: 520px)')
