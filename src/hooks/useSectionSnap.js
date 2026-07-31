@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { sceneConfig } from '../data/scrollScene'
+import { tune } from '../lib/devTuning'
 import { clamp } from '../lib/math'
 
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -36,7 +37,10 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const outer = outerRef.current
     if (!outer) return
 
-    const { duration, quietMs, touchThreshold } = sceneConfig.snap
+    // 개발 중 ?snapDuration=1400&snapQuiet=200 으로 바로 바꿔볼 수 있다
+    const duration = tune('snapDuration', sceneConfig.snap.duration)
+    const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
+    const { touchThreshold } = sceneConfig.snap
 
     const metrics = () => {
       const top = outer.offsetTop

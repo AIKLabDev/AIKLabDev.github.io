@@ -2,7 +2,11 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import { Vector3 } from 'three'
 import { sceneConfig } from '../../data/scrollScene'
+import { tune } from '../../lib/devTuning'
 import { damp } from '../../lib/math'
+
+// 개발 중 ?camDamp=6 으로 바로 바꿔볼 수 있다 (프로덕션에서는 상수로 접힌다)
+const DAMPING = tune('camDamp', sceneConfig.cameraDamping)
 
 /**
  * 스크롤 진행률 → 카메라 위치·시선·화각.
@@ -26,7 +30,7 @@ export default function CameraRig({ progress, path, compact = false }) {
     const dt = Math.min(delta, 0.1)
     const cam = state.camera
     const s = path.sample(progress.current, sample.current)
-    const l = sceneConfig.cameraDamping
+    const l = DAMPING
 
     // 스크롤과 무관한 미세 패럴랙스 — 정지 중에도 장면이 죽어 보이지 않게
     const px = state.pointer.x * sceneConfig.parallax
