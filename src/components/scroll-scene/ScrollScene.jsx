@@ -15,6 +15,7 @@ import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { mixHex } from '../../lib/color'
 import { setHeroReveal } from '../../lib/heroChrome'
 import { clamp } from '../../lib/math'
+import { handleAnchorClick } from '../../lib/anchorScroll'
 import { readLastScroll, writeLastScroll } from '../../lib/lastScroll'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 import { useSectionSnap } from '../../hooks/useSectionSnap'
@@ -232,6 +233,11 @@ function ScrollCanvas() {
        */
       className="relative isolate -mt-16 bg-ink-950 lg:-mt-20"
       style={{ height: `${totalVh}svh` }}
+      /*
+       * 히어로 안의 앵커(회사 알아보기 / 소개 건너뛰기)는 주소에 해시를 남기지
+       * 않는다. 여기서 위임으로 받는 이유는 앵커가 섹션마다 흩어져 있어서다.
+       */
+      onClick={handleAnchorClick}
     >
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">
         {/* 첫 프레임 전까지는 캔버스가 비어 있지만, 섹션 배경이 ink-950 이라
