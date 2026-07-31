@@ -1,5 +1,5 @@
 import { AdaptiveDpr, PerformanceMonitor, Preload } from '@react-three/drei'
-import { Canvas, invalidate } from '@react-three/fiber'
+import { Canvas, invalidate, useFrame } from '@react-three/fiber'
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   ASSIGNED_VARIANTS,
@@ -66,10 +66,26 @@ export default function ScrollScene() {
   return <ScrollCanvas />
 }
 
+/**
+ * 첫 프레임이 실제로 그려진 시점을 알린다.
+ * 셰이더 컴파일과 환경맵 굽기 때문에 마운트와 첫 렌더 사이에 눈에 띄는 간격이 있고,
+ * 로딩 화면은 그 간격을 덮으려고 있는 것이므로 이 신호가 있어야 의미가 있다.
+ */
+function FirstFrame({ onReady }) {
+  const fired = useRef(false)
+  useFrame(() => {
+    if (fired.current) return
+    fired.current = true
+    onReady()
+  })
+  return null
+}
+
 function ScrollCanvas() {
   const outer = useRef(null)
   const sticky = useRef(null)
   const compact = useIsCompact()
+  const [firstFrame, setFirstFrame] = useState(false)
   const { progress, subscribe } = useScrollProgress(outer, sticky)
 
   // 변형은 마운트 때 한 번만 정한다. 도중에 바뀌면 스크롤 높이가 달라져
@@ -190,6 +206,7 @@ function ScrollCanvas() {
               <Preload all />
             </Suspense>
             <CameraRig progress={progress} path={cameraPath} compact={compact} />
+            <FirstFrame onReady={() => setFirstFrame(true)} />
           </Canvas>
 
           {/* 텍스트 가독성용 그라데이션 — 3D 위에 얹는다.
@@ -208,7 +225,7 @@ function ScrollCanvas() {
         </div>
 
         <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions />
-        <SceneLoader />
+        <SceneLoader ready={firstFrame} />
       </div>
     </section>
   )
