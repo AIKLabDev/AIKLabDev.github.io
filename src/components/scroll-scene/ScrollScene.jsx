@@ -13,6 +13,7 @@ import {
 } from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { mixHex } from '../../lib/color'
+import { setHeroReveal } from '../../lib/heroChrome'
 import { clamp } from '../../lib/math'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 import { useSectionSnap } from '../../hooks/useSectionSnap'
@@ -128,9 +129,17 @@ function ScrollCanvas() {
         if (chrome.current) chrome.current.style.opacity = 1 - t
         // 배경은 다음 섹션 색으로 옮긴다. 여기가 이음매를 없애는 핵심이다.
         if (outer.current) outer.current.style.backgroundColor = mixHex(background[0], background[1], t)
+
+        // 헤더도 같은 타이밍에 3D 위의 최소 상태에서 평범한 웹페이지 헤더로 돌아온다.
+        // 배경이 흰색이 되는 순간과 메뉴가 나타나는 순간을 맞춰야 "3D 에서 페이지로
+        // 넘어왔다" 로 읽힌다. 따로 놀면 그냥 메뉴가 튀어나온 것으로 보인다.
+        setHeroReveal(t)
       }),
     [subscribe],
   )
+
+  // 라우트가 바뀌어 히어로가 사라지면 헤더를 원래대로 돌려놓는다
+  useEffect(() => () => setHeroReveal(1), [])
 
   return (
     <section
