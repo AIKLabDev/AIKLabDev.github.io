@@ -14,14 +14,28 @@ export function Section({ id, tone = 'light', className = '', children }) {
   )
 }
 
+/** 제목만 있는 섹션에서는 md로 한 단계 낮춰 쓴다. */
+const headSizes = {
+  lg: 'mt-3 text-2xl sm:text-3xl lg:text-[2.125rem]',
+  md: 'mt-2.5 text-xl sm:text-2xl lg:text-[1.625rem]',
+}
+
 /** 섹션 머리말 — eyebrow / 제목 / 설명 + 우측 액션 */
-export function SectionHead({ eyebrow, title, description, action, dark = false, className = '' }) {
+export function SectionHead({
+  eyebrow,
+  title,
+  description,
+  action,
+  size = 'lg',
+  dark = false,
+  className = '',
+}) {
   return (
     <div className={`flex flex-wrap items-end justify-between gap-x-8 gap-y-4 ${className}`}>
       <div className="max-w-2xl">
         {eyebrow && <p className={dark ? 'eyebrow-on-dark' : 'eyebrow'}>{eyebrow}</p>}
         <h2
-          className={`mt-3 text-2xl font-bold tracking-tight sm:text-3xl lg:text-[2.125rem] ${
+          className={`font-bold tracking-tight ${headSizes[size]} ${
             dark ? 'text-white' : 'text-ink-900'
           }`}
         >
