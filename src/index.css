@@ -68,6 +68,16 @@
   }
 }
 
+/* 로딩 하안선의 불확정 진행 표시 — 받을 파일이 없어 퍼센트를 알 수 없을 때 쓴다 */
+@keyframes loading-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(500%);
+  }
+}
+
 @layer utilities {
   /* 본문 최대 폭 컨테이너 */
   .container-page {

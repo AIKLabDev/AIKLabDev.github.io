@@ -1,7 +1,6 @@
 import { useProgress } from '@react-three/drei'
 import { useEffect, useState } from 'react'
 import { sceneConfig } from '../../data/scrollScene'
-import { site } from '../../data/site'
 
 /**
  * 첫 접속 로딩 화면.
@@ -11,8 +10,12 @@ import { site } from '../../data/site'
  * 완료로 나오고, 그러면 셰이더 컴파일·환경맵 굽는 동안 어두운 빈 화면이 그대로
  * 노출된다. 실제 모델을 붙이면 두 조건이 모두 필요해진다.
  *
- * 화면 전체(헤더 포함)를 덮는다. 헤더만 남겨두면 로딩 중에 메뉴를 누를 수 있는데,
- * 그 시점의 페이지는 아직 준비되지 않았다.
+ * 헤더보다 아래에 깔린다(z-40 < 헤더 z-50). 의도적이다 — 로고를 여기서 또 그리면
+ * 상단 로고와 중복되므로, 상단 것을 그대로 살리고 로더는 배경만 덮는다.
+ * 히어로에서는 어차피 메뉴가 감춰져 있어 로딩 중에 누를 것도 없다.
+ *
+ * 표시는 화면 가운데가 아니라 좌하단 — 로딩이 끝나면 같은 자리에 진행 표시
+ * (01 / 08)가 들어선다. 같은 자리가 "불러오는 중" 에서 "몇 번째" 로 이어진다.
  */
 export default function SceneLoader({ ready }) {
   const { active, progress } = useProgress()
@@ -50,43 +53,30 @@ export default function SceneLoader({ ready }) {
       role="status"
       aria-live="polite"
       aria-busy={!hidden}
-      className={`fixed inset-0 z-60 grid place-items-center bg-ink-950 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-40 bg-ink-950 transition-opacity duration-500 ${
         hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="flex flex-col items-center gap-7">
-        <img
-          src="/brand/aikorea-logo.png"
-          alt={`${site.name} 로고`}
-          className="h-7 w-auto brightness-0 invert lg:h-8"
-        />
+      {/* 하안선 — 진행 표시(SceneProgress)의 막대와 같은 자리다 */}
+      <div className="absolute inset-x-0 bottom-0 h-px overflow-hidden bg-white/10">
+        {progress > 0 ? (
+          <div
+            className="h-full bg-accent-400/70 transition-[width] duration-200 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        ) : (
+          <div
+            className="h-full w-1/5 bg-accent-400/70"
+            style={{ animation: 'loading-sweep 1.4s ease-in-out infinite' }}
+          />
+        )}
+      </div>
 
-        <span className="relative grid size-16 place-items-center">
-          {/* 바탕 링 + 도는 호. 받을 파일이 없을 때는 진행률이 없으므로 회전으로 표현한다 */}
-          <svg viewBox="0 0 48 48" className="absolute size-full -rotate-90" aria-hidden="true">
-            <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15" />
-            <circle
-              cx="24"
-              cy="24"
-              r="21"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeDasharray="132"
-              strokeDashoffset="99"
-              className="origin-center animate-spin text-accent-400"
-              style={{ animationDuration: '1.1s' }}
-            />
-          </svg>
-          {progress > 0 && (
-            <span className="font-mono text-[0.6875rem] font-bold text-white tabular-nums">
-              {Math.round(progress)}
-            </span>
-          )}
-        </span>
-
+      <div className="container-page absolute inset-x-0 bottom-0 flex items-center gap-3 pb-6">
         <span className="font-mono text-[0.625rem] tracking-[0.3em] text-brand-100/45 uppercase">Loading</span>
+        {progress > 0 && (
+          <span className="font-mono text-[0.625rem] text-accent-400 tabular-nums">{Math.round(progress)}%</span>
+        )}
       </div>
     </div>
   )
