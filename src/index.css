@@ -43,6 +43,15 @@
     /* sticky 헤더 높이만큼 앵커 오프셋 */
     scroll-padding-top: 5rem;
     -webkit-text-size-adjust: 100%;
+
+    /*
+     * 당겨서 새로고침(pull-to-refresh) 차단.
+     * 히어로 첫 장에서 위로 스크롤하면 이미 문서 최상단이라, 모바일 크롬이 그
+     * 제스처를 새로고침으로 받아 페이지가 다시 뜬다. 스크롤로 서사를 진행하는
+     * 화면에서는 되돌아보려는 동작이 곧 새로고침이 되어버린다.
+     * contain 은 새로고침만 막고 끝에서의 반동 표시는 남긴다.
+     */
+    overscroll-behavior-y: contain;
   }
 
   body {
