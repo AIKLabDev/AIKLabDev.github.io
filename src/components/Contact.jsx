@@ -11,14 +11,16 @@ export default function Contact() {
         aria-hidden="true"
       />
 
+
+
+
       <div className="container-page py-16 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            산업 현장의 다음 움직임을
-            <br className="hidden sm:block" /> 함께 만들어 주세요
+          산업 현장의 새로운 가능성을 함께 만들어 주세요.
           </h2>
           <p className="mt-5 text-[0.9375rem] leading-relaxed text-brand-100/70">
-            AIKOREA와 함께 로봇과 자동화의 다음 단계를 개발할 동료를 기다립니다.
+            AIKOREA는 더 나은 자동화 기술을 현실로 만들어나갈 인재를 기다립니다.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">

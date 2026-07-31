@@ -20,8 +20,10 @@ export default function Hero() {
           <p className="eyebrow-on-dark">AIKOREA · ROBOTICS &amp; AUTOMATION</p>
 
           <h1 className="mt-5 text-[2rem] leading-[1.2] font-bold tracking-tight text-white sm:text-[2.75rem] lg:text-[3.25rem]">
-            산업 현장의 움직임을 <span className="text-accent-400">로봇으로</span> 바꿉니다
+          산업의 움직임에 <br></br> <span className="text-accent-400">로봇의 가능성</span>을 더합니다.
           </h1>
+           
+
 
           <div className="mt-6 max-w-xl space-y-3 text-[0.9375rem] leading-relaxed text-brand-100/80 sm:text-base">
             <p>
