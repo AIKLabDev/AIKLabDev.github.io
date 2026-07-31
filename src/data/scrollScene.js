@@ -89,13 +89,27 @@ export const sceneConfig = {
   skipTarget: '#about',
 
   /**
-   * 마지막 구간에서 3D 를 걷어내는 범위(진행률).
+   * 아웃트로 — 마지막 전환(07 -> 08)에서 히어로를 다음 콘텐츠에 넘긴다.
    *
-   * 3D 가 살아 있는 채로 다음 콘텐츠가 이어지면 서사가 끊긴 자리가 그대로 드러난다.
-   * 마지막 전환(07 -> 08)에서 장면을 지우고 텍스트+CTA 카드만 남기면,
-   * 페이지가 이어질 때 버려지는 것이 없어 이음매가 보이지 않는다.
+   * 3D 가 살아 있는 채로 페이지가 이어지면 서사가 끊긴 자리가 드러난다. 그래서
+   * 이 구간에서 장면·그라데이션·진행표시를 걷어내고, 배경을 다음 섹션 색으로
+   * 옮기고, 글자색을 함께 뒤집는다. 끝나면 흰 배경에 검은 글씨 + CTA 만 남으므로
+   * About(순백)이 이어져도 경계가 보이지 않는다.
+   *
+   * background 의 도착값은 반드시 히어로 다음 섹션의 배경과 같아야 한다.
+   * About 이 tone 을 바꾸면 여기도 같이 바꿔야 이음매가 유지된다.
    */
-  outro: { from: 0.87, to: 1 },
+  outro: {
+    from: 0.87,
+    to: 1,
+    background: ['#05101f', '#ffffff'], // ink-950 -> About 의 white
+    eyebrow: ['#38bdf8', '#1b4fa8'], // accent-400 -> brand-600
+    title: ['#ffffff', '#0a1628'], // white -> ink-900
+    accent: ['#38bdf8', '#1b4fa8'],
+    body: ['#dbe7ff', '#5b6577'],
+    /** 보조 CTA 의 글자·테두리 (주 CTA 는 파란 채움이라 양쪽에서 다 읽힌다) */
+    cta: ['#ffffff', '#0a1628'],
+  },
 
   /**
    * 화면 안에서 피사체를 밀어 텍스트와 겹치지 않게 하는 양.
@@ -373,9 +387,11 @@ export const scrollSections = [
     // 스냅에서는 사용자가 스크롤할 때까지 여기 머무르므로 체류 시간은 스크롤 길이가 아니라
     // 사용자가 정한다.
     camera: { position: [0, 2.0, 10.6], target: [0, 1.1, 0], fov: 44 },
+    // 아웃트로에서 배경이 흰색으로 바뀌므로, 주 CTA 는 배경색에 의존하지 않는
+    // 파란 채움을 쓴다. 보조 CTA 는 테두리·글자색을 진행률에 따라 뒤집는다.
     actions: [
-      { label: '채용 공고 보기', href: '#positions', variant: 'onDark' },
-      { label: '회사 알아보기', href: '#about', variant: 'outlineDark' },
+      { label: '채용 공고 보기', href: '#positions', variant: 'primary' },
+      { label: '회사 알아보기', href: '#about', variant: 'outlineDark', outroTinted: true },
     ],
   },
 ]

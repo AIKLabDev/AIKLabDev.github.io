@@ -12,6 +12,7 @@ import {
   scrollModel,
 } from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
+import { mixHex } from '../../lib/color'
 import { clamp } from '../../lib/math'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 import { useSectionSnap } from '../../hooks/useSectionSnap'
@@ -113,7 +114,7 @@ function ScrollCanvas() {
    * CSS transition 을 쓰지 않고 스크롤 값에서 직접 계산한다 — 되감을 때도
    * 정확히 대칭이어야 하고, transition 은 스크롤을 따라오지 못한다.
    */
-  const canvasWrap = useRef(null)
+  const chrome = useRef(null) // 캔버스 + 그라데이션 + 진행표시 — 함께 걷힌다
   useEffect(
     () =>
       subscribe((p) => {
@@ -121,10 +122,12 @@ function ScrollCanvas() {
         // 진행률은 ref 로만 흐르므로 React 리렌더가 없어 R3F 가 다시 그릴 계기가 없다.
         invalidate()
 
-        const el = canvasWrap.current
-        if (!el) return
-        const { from, to } = sceneConfig.outro
-        el.style.opacity = 1 - clamp((p - from) / (to - from), 0, 1)
+        const { from, to, background } = sceneConfig.outro
+        const t = clamp((p - from) / (to - from), 0, 1)
+
+        if (chrome.current) chrome.current.style.opacity = 1 - t
+        // 배경은 다음 섹션 색으로 옮긴다. 여기가 이음매를 없애는 핵심이다.
+        if (outer.current) outer.current.style.backgroundColor = mixHex(background[0], background[1], t)
       }),
     [subscribe],
   )
@@ -139,7 +142,7 @@ function ScrollCanvas() {
       <div ref={sticky} className="sticky top-0 h-svh w-full overflow-hidden">
         {/* 첫 프레임 전까지는 캔버스가 비어 있지만, 섹션 배경이 ink-950 이라
             아직 안 그려진 상태가 그대로 어두운 히어로로 보인다 — 별도 페이드가 필요 없다. */}
-        <div ref={canvasWrap} className="absolute inset-0">
+        <div ref={chrome} className="absolute inset-0">
           <Canvas
             frameloop={inView ? 'always' : 'never'}
             shadows={!compact}
@@ -162,20 +165,23 @@ function ScrollCanvas() {
             </Suspense>
             <CameraRig progress={progress} path={cameraPath} compact={compact} />
           </Canvas>
+
+          {/* 텍스트 가독성용 그라데이션 — 3D 위에 얹는다.
+              어두운 그라데이션이라 배경이 흰색으로 바뀔 때 같이 걷혀야 한다. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/80 via-ink-950/5 to-ink-950/85"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,16,31,0.7)_100%)]"
+          />
+
+          {/* 진행표시도 흰 글씨라 함께 걷는다. 마지막 단계에서는 역할도 끝났다. */}
+          <SceneProgress subscribe={subscribe} sections={sections} />
         </div>
 
-        {/* 텍스트 가독성용 그라데이션 — 3D 위에 얹는다 */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/80 via-ink-950/5 to-ink-950/85"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,16,31,0.7)_100%)]"
-        />
-
         <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions />
-        <SceneProgress subscribe={subscribe} sections={sections} />
         <SceneLoader />
       </div>
     </section>
