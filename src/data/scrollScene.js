@@ -170,7 +170,7 @@ export const sceneConfig = {
     background: '#05101f',
     fog: { color: '#05101f', near: 14, far: 38 },
 
-    ambient: 0.85,
+    ambient: 0.95,
     hemisphere: { sky: '#bcd2ff', ground: '#05101f', intensity: 1.1 },
 
     /** 주광 — 그림자를 만드는 유일한 광원 */
@@ -188,10 +188,14 @@ export const sceneConfig = {
     /** 정면 필 — 카메라가 어디로 돌든 형태가 뭉개지지 않게 */
     fill: { position: [0, 3, 9], intensity: 1.1, color: '#dbe7ff' },
 
-    /** 림라이트 — 로고 팔레트(accent-400 / brand-500) */
+    /**
+     * 림라이트 — 로고 팔레트(accent-400 / brand-500).
+     * 차량 뒤쪽(-Z)에 있어서 후면을 보여주는 카드(07)의 밝기를 사실상 이 둘이 정한다.
+     * fill 은 +Z 라 그쪽에서는 도움이 되지 않는다.
+     */
     rims: [
-      { position: [-6, 2.5, -4], intensity: 2.2, color: '#38bdf8' },
-      { position: [3, 1.2, -6], intensity: 1.3, color: '#2f63ea' },
+      { position: [-6, 2.5, -4], intensity: 3.1, color: '#38bdf8' },
+      { position: [3, 1.2, -6], intensity: 1.9, color: '#2f63ea' },
     ],
 
     /** 절차적 환경맵 — 금속 반사와 전체 톤을 만든다 */
