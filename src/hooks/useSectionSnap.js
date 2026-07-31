@@ -9,28 +9,45 @@ const isTypingTarget = (el) =>
   !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName ?? ''))
 
 /**
+ * 관성으로 볼 이벤트 간격(ms).
+ * 트랙패드 관성은 프레임 단위(10~16ms)로 쏟아지고, 사람이 휠을 굴리는 간격은
+ * 보통 80ms 이상이다. 이 값보다 촘촘하면 "아직 손을 뗀 뒤 흘러나오는 입력"으로 본다.
+ */
+const MOMENTUM_GAP_MS = 60
+
+/**
  * 한 번의 입력에 한 섹션씩 넘어가는 스크롤 스냅.
  *
  * 구현 자체는 단순하다 — 입력을 가로채고, 잠그고, 다음 섹션 위치로 애니메이션하고,
- * 끝나면 푼다. 실제로 어려운 건 아래 네 가지이고 전부 여기서 처리한다.
+ * 끝나면 푼다. 실제로 어려운 건 아래 항목들이고 전부 여기서 처리한다.
  *
  * 1) window·document·body 의 wheel 리스너는 Chrome 기본이 passive 라
  *    preventDefault 가 무시된다. { passive: false } 를 반드시 명시해야 한다.
  * 2) 트랙패드는 한 번 튕기면 delta 가 감쇠하며 수십~수백 개가 들어온다.
  *    "애니메이션 끝나면 해제" 만 하면 해제 직후 잔여 관성이 다음 섹션을 바로
- *    트리거해서 한 번에 두세 섹션이 넘어간다 → 입력이 조용해질 때까지 더 잠근다.
+ *    트리거해서 한 번에 두세 섹션이 넘어간다 → 잠깐 더 잠가둔다.
+ *    다만 그 연장에는 반드시 상한이 있어야 한다. 상한 없이 입력마다 타이머를
+ *    되감으면, 마우스 휠을 꾸준히 굴리는 사람은 완전히 멈출 때까지 영원히
+ *    잠긴다(= 페이지가 얼어붙은 것처럼 보인다).
  * 3) wheel 만 막으면 키보드·터치는 네이티브로 돌아 같은 페이지에 스크롤 모델이
  *    두 개 생긴다 → keydown·touchmove 도 같이 처리한다.
  * 4) 양 끝(첫 섹션에서 위 / 마지막 섹션에서 아래)에서는 가로채지 않는다.
  *    그래야 히어로 밖으로 정상적으로 빠져나갈 수 있다.
+ * 5) ctrl+휠(브라우저 확대)과 가로 스크롤은 우리 것이 아니다. 건드리지 않는다.
+ * 6) 애니메이션 도중 다른 주체(건너뛰기 링크, 스크롤바 드래그, Home 키)가
+ *    스크롤을 옮기면 우리 쪽을 포기한다. 둘이 같은 값을 쓰면 떨린다.
  *
  * prefers-reduced-motion 사용자는 애초에 3D 히어로를 받지 않으므로
  * 이 훅도 마운트되지 않는다.
  */
 export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
-  const locked = useRef(false)
+  const animating = useRef(false)
+  /** 이 시각 이후에 입력을 다시 받는다 (performance.now 기준) */
+  const cooldownUntil = useRef(0)
+  /** 아무리 연장돼도 이 시각에는 반드시 푼다 — 얼어붙음 방지 */
+  const cooldownHardUntil = useRef(0)
+  const lastInputAt = useRef(0)
   const rafId = useRef(0)
-  const quietTimer = useRef(0)
 
   useEffect(() => {
     if (!enabled) return
@@ -40,12 +57,18 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     // 개발 중 ?snapDuration=1400&snapQuiet=200 으로 바로 바꿔볼 수 있다
     const duration = tune('snapDuration', sceneConfig.snap.duration)
     const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
+    const maxQuietMs = tune('snapMaxQuiet', sceneConfig.snap.maxQuietMs)
     const { touchThreshold } = sceneConfig.snap
 
+    /**
+     * 문서 좌표 기준 히어로 위치.
+     * useScrollProgress 와 같은 근거(getBoundingClientRect)를 써야 한다 —
+     * offsetTop 은 offsetParent 기준이라 상위에 positioned 요소가 끼면 조용히 어긋난다.
+     */
     const metrics = () => {
-      const top = outer.offsetTop
+      const rect = outer.getBoundingClientRect()
       const viewport = stickyRef.current?.offsetHeight || window.innerHeight
-      return { top, travel: outer.offsetHeight - viewport }
+      return { top: rect.top + window.scrollY, travel: rect.height - viewport }
     }
 
     /** 히어로가 화면을 잡고 있는 동안에만 개입한다. 밖에서는 평범한 페이지다. */
@@ -80,31 +103,39 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       return -1
     }
 
-    const bumpQuiet = () => {
-      clearTimeout(quietTimer.current)
-      quietTimer.current = setTimeout(() => {
-        locked.current = false
-      }, quietMs)
+    /** 타이머 대신 시각을 비교한다 — 되감기는 타이머가 만든 얼어붙음을 구조적으로 없앤다. */
+    const isLocked = () => animating.current || performance.now() < cooldownUntil.current
+
+    const endAnimation = () => {
+      animating.current = false
+      const now = performance.now()
+      cooldownUntil.current = now + quietMs
+      cooldownHardUntil.current = now + maxQuietMs
     }
 
     const animateTo = (y) => {
       cancelAnimationFrame(rafId.current)
-      clearTimeout(quietTimer.current)
 
       const from = window.scrollY
       const dist = y - from
-      locked.current = true
+      if (Math.abs(dist) < 1) return endAnimation()
 
-      if (Math.abs(dist) < 1) return bumpQuiet()
-
+      animating.current = true
       const start = performance.now()
+      let expected = null
+
       const step = (now) => {
+        // 다른 주체가 스크롤을 옮겼으면 우리 애니메이션을 포기한다
+        if (expected !== null && Math.abs(window.scrollY - expected) > 2) return endAnimation()
+
         const t = Math.min(1, (now - start) / duration)
         // index.css 의 scroll-behavior: smooth 가 걸려 있어 behavior 를 명시하지 않으면
         // scrollTo 가 자체 애니메이션을 돌려 이 루프와 싸운다.
         window.scrollTo({ top: from + dist * easeInOutCubic(t), behavior: 'instant' })
+        expected = window.scrollY // 브라우저가 클램프할 수 있으니 실제 반영값을 기준으로 삼는다
+
         if (t < 1) rafId.current = requestAnimationFrame(step)
-        else bumpQuiet() // 애니메이션 종료 ≠ 해제. 입력이 조용해져야 해제한다.
+        else endAnimation() // 애니메이션 종료 ≠ 해제. 관성이 잦아들 시간을 조금 더 준다.
       }
       rafId.current = requestAnimationFrame(step)
     }
@@ -116,13 +147,29 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       return true
     }
 
+    /**
+     * 잠긴 동안 들어온 입력 처리.
+     * 관성으로 보이면(직전 입력과 촘촘하면) 해제를 조금 미루되, 하드 상한은 넘지 않는다.
+     */
+    const holdIfMomentum = (now) => {
+      if (now - lastInputAt.current < MOMENTUM_GAP_MS) {
+        cooldownUntil.current = Math.min(now + quietMs, cooldownHardUntil.current)
+      }
+    }
+
     const onWheel = (e) => {
+      if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
       if (!inHero()) return
-      if (locked.current) {
+
+      const now = performance.now()
+      if (isLocked()) {
         e.preventDefault()
-        bumpQuiet() // 관성이 계속 들어오는 동안은 계속 잠가둔다
+        holdIfMomentum(now)
+        lastInputAt.current = now
         return
       }
+      lastInputAt.current = now
       if (advance(e.deltaY > 0 ? 1 : -1)) e.preventDefault()
     }
 
@@ -135,7 +182,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       else if (e.key === ' ') dir = e.shiftKey ? -1 : 1
       else return // Home/End/Tab 등은 네이티브 그대로 (탈출 경로를 막지 않는다)
 
-      if (locked.current) return e.preventDefault()
+      // 키는 관성이 없다. 잠긴 동안은 막기만 하고 연장하지 않는다.
+      if (isLocked()) return e.preventDefault()
+      lastInputAt.current = performance.now()
       if (advance(dir)) e.preventDefault()
     }
 
@@ -147,12 +196,13 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const onTouchMove = (e) => {
       if (!inHero()) return
       e.preventDefault() // 히어로 안에서는 자유 스크롤을 막는다 (스냅의 정의)
-      if (locked.current) return
+      if (isLocked()) return
 
       const y = e.touches[0]?.clientY ?? touchY
       const dy = touchY - y
       if (Math.abs(dy) < touchThreshold) return
       touchY = y
+      lastInputAt.current = performance.now()
       advance(dy > 0 ? 1 : -1)
     }
 
@@ -169,8 +219,8 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove, opts)
       cancelAnimationFrame(rafId.current)
-      clearTimeout(quietTimer.current)
-      locked.current = false
+      animating.current = false
+      cooldownUntil.current = 0
     }
   }, [enabled, outerRef, stickyRef, sections])
 }
