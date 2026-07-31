@@ -19,7 +19,10 @@ import { lerp, rangeProgress, smoothstep } from '../../lib/math'
 const BODY = <meshStandardMaterial color="#14356e" metalness={0.4} roughness={0.45} />
 const STEEL = <meshStandardMaterial color="#8fa3bd" metalness={0.85} roughness={0.3} />
 const DARK = <meshStandardMaterial color="#0a1628" metalness={0.25} roughness={0.7} />
-const RUBBER = <meshStandardMaterial color="#05101f" metalness={0.05} roughness={0.9} />
+// 타이어. 배경(ink-950 = #05101f)과 같은 색이면 실루엣이 통째로 사라진다 —
+// 실제로 그랬다. 어두운 고무로 읽히면서 배경에서는 떨어지는 값이어야 하고,
+// roughness 를 조금 낮춰 환경광이 위쪽 모서리에 걸리게 해야 형태가 보인다.
+const RUBBER = <meshStandardMaterial color="#2a3542" metalness={0.15} roughness={0.72} />
 const CARGO = <meshStandardMaterial color="#3b4a5f" metalness={0.1} roughness={0.7} />
 const WOOD = <meshStandardMaterial color="#55647c" metalness={0.05} roughness={0.85} />
 const GLOW = <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={1.8} toneMapped={false} />
