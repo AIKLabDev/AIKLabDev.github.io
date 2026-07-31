@@ -56,6 +56,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
   const cooldownHardUntil = useRef(0)
   const lastInputAt = useRef(0)
   const rafId = useRef(0)
+  /** 스크롤 자체를 막아 관성을 죽이는 구간의 종료 시각 */
+  const hardLockUntil = useRef(0)
+  const hardLockTimer = useRef(0)
 
   useEffect(() => {
     if (!enabled) return
@@ -67,7 +70,6 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     const quietMs = tune('snapQuiet', sceneConfig.snap.quietMs)
     const maxQuietMs = tune('snapMaxQuiet', sceneConfig.snap.maxQuietMs)
     const reentryMs = tune('snapReentry', sceneConfig.snap.reentryMs)
-    const captureDuration = tune('snapCapture', sceneConfig.snap.captureDuration)
     const { touchThreshold } = sceneConfig.snap
 
     /**
@@ -121,7 +123,36 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     /** 타이머 대신 시각을 비교한다 — 되감기는 타이머가 만든 얼어붙음을 구조적으로 없앤다. */
-    const isLocked = () => animating.current || performance.now() < cooldownUntil.current
+    const isLocked = () =>
+      animating.current || performance.now() < Math.max(cooldownUntil.current, hardLockUntil.current)
+
+    /**
+     * 스크롤을 아예 불가능하게 만들어 관성을 죽인다.
+     *
+     * 관성은 이벤트가 오지 않으므로 preventDefault 로 막을 수 없고, scrollTo 로
+     * 덮어써도 프레임 사이에 계속 밀고 들어와 이길 수 없다. 갈 곳을 없애는 것이
+     * 유일하게 확실한 방법이다.
+     *
+     * 복구를 놓치면 페이지가 스크롤 불가로 남는다. 타이머·정리 함수 양쪽에서 푼다.
+     */
+    const releaseHardLock = () => {
+      clearTimeout(hardLockTimer.current)
+      hardLockUntil.current = 0
+      const el = document.documentElement
+      el.style.overflow = ''
+      el.style.paddingRight = ''
+    }
+
+    const hardLock = (ms) => {
+      clearTimeout(hardLockTimer.current)
+      const el = document.documentElement
+      // 스크롤바가 사라지면서 폭이 변하면 화면이 튄다. 그만큼 여백으로 메운다.
+      const gutter = window.innerWidth - el.clientWidth
+      if (gutter > 0) el.style.paddingRight = `${gutter}px`
+      el.style.overflow = 'hidden'
+      hardLockUntil.current = performance.now() + ms
+      hardLockTimer.current = setTimeout(releaseHardLock, ms)
+    }
 
     /** 히어로 기준 현재 위치 */
     const regionOf = () => {
@@ -129,21 +160,6 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       if (window.scrollY < top - 1) return 'above'
       if (window.scrollY > top + travel + 1) return 'below'
       return 'inside'
-    }
-
-    /** 진행률에 가장 가까운 섹션 */
-    const nearestIndex = () => {
-      const p = progressNow()
-      let best = 0
-      let bestDist = Infinity
-      for (let i = 0; i < sections.length; i++) {
-        const d = Math.abs(sections[i].at - p)
-        if (d < bestDist) {
-          bestDist = d
-          best = i
-        }
-      }
-      return best
     }
 
     const endAnimation = (extraLock = 0) => {
@@ -235,10 +251,19 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
      */
     const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false
 
+    /**
+     * 아래에서 관성으로 되돌아온 것을 경계에 붙여 세운다.
+     *
+     * 애니메이션으로 "따라잡으려" 하면 관성과 위치를 다투다 진다. 대신 즉시
+     * 마지막 섹션 위치로 붙이고 스크롤을 잠가, 관성이 밀 공간 자체를 없앤다.
+     * (web.auto 는 히어로에 스크롤 높이를 주지 않아 문서 최상단이 곧 벽이 되고,
+     *  거기서 1초를 기다렸다가 8장을 띄운다 — 성질이 같다.)
+     */
     const capture = () => {
       captures += 1
-      // force: 관성에게 양보하지 않는다. 끝까지 덮어써야 멈춘다.
-      animateTo(targetFor(nearestIndex()), { lock: reentryMs, ms: captureDuration, force: true })
+      const last = sections.length - 1
+      window.scrollTo({ top: targetFor(last), behavior: 'instant' })
+      hardLock(reentryMs)
     }
 
     const onScroll = () => {
@@ -256,10 +281,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
         return capture()
       }
 
-      // 붙잡은 뒤에도 잔여 관성이 계속 밀고 있다면 다시 잡는다.
-      // 입력이 없는데 스크롤만 크게 움직이는 상황 = 관성이다.
+      // 잠금이 풀린 직후에도 잔여 관성이 남아 밀고 있으면 한 번 더 잡는다.
       const noInput = performance.now() - lastInputAt.current > 250
-      if (coarse && region === 'inside' && noInput && drift > 50 && captures > 0 && captures < 4) {
+      if (coarse && region === 'inside' && noInput && drift > 50 && captures > 0 && captures < 3) {
         capture()
       }
     }
@@ -297,16 +321,19 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     let touchY = 0
     let touchX = 0
-    /** 이 제스처가 이미 한 섹션을 소비했는가 — "스와이프 1회 = 1섹션" 을 보장한다 */
-    let gestureUsed = false
 
     const onTouchStart = (e) => {
       const t = e.touches[0]
       touchY = t?.clientY ?? 0
       touchX = t?.clientX ?? 0
-      gestureUsed = false
     }
 
+    /**
+     * 이동 중에는 방향만 보고 자유 스크롤을 막는다. 섹션 전환은 손을 뗄 때 정한다.
+     * 이동 중에 임계값으로 판정하면 손가락을 끄는 동안 여러 번 발화하고,
+     * 그때마다 "한 스와이프 = 한 섹션" 을 지키려고 별도 래치가 필요해진다.
+     * 손을 뗄 때 한 번만 판정하면 그 문제가 구조적으로 사라진다.
+     */
     const onTouchMove = (e) => {
       if (!inRegion()) return
       const t = e.touches[0]
@@ -314,24 +341,24 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
       const dy = touchY - t.clientY
       const dx = touchX - t.clientX
+      if (Math.abs(dx) > Math.abs(dy)) return // 가로 우세 — 우리 것이 아니다
 
-      // 가로 우세 제스처는 우리 것이 아니다 (iOS 뒤로가기 엣지 스와이프 포함)
-      if (Math.abs(dx) > Math.abs(dy)) return
-
-      const dir = dy > 0 ? 1 : -1
       // 히어로 밖으로 나가는 방향이면 네이티브에 넘긴다.
-      // 이 판단을 preventDefault 前에 해야 한다 — iOS 는 브라우저가 스크롤을 시작한
-      // 뒤에 오는 preventDefault 를 무시하므로, 첫 touchmove 에서 결정해야 한다.
-      if (resolveTarget(dir) === -1) return
+      // iOS 는 브라우저가 스크롤을 시작한 뒤의 preventDefault 를 무시하므로
+      // 첫 touchmove 에서 결정해야 한다.
+      if (resolveTarget(dy > 0 ? 1 : -1) === -1) return
 
-      e.preventDefault() // 히어로 안에서는 자유 스크롤을 막는다 (스냅의 정의)
+      e.preventDefault()
+    }
 
-      if (gestureUsed || isLocked()) return
+    const onTouchEnd = (e) => {
+      if (!inRegion() || isLocked()) return
+      const y = e.changedTouches[0]?.clientY
+      if (y == null) return
+      const dy = touchY - y
       if (Math.abs(dy) < touchThreshold) return
-
-      gestureUsed = true
       lastInputAt.current = performance.now()
-      advance(dir)
+      advance(dy > 0 ? 1 : -1)
     }
 
     // passive: false 가 핵심이다. 없으면 preventDefault 가 조용히 무시된다.
@@ -341,6 +368,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, opts)
+    window.addEventListener('touchend', onTouchEnd)
 
     return () => {
       window.removeEventListener('scroll', onScroll)
@@ -348,7 +376,9 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove, opts)
+      window.removeEventListener('touchend', onTouchEnd)
       cancelAnimationFrame(rafId.current)
+      releaseHardLock()
       animating.current = false
       cooldownUntil.current = 0
     }
