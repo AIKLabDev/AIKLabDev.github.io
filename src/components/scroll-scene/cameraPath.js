@@ -1,20 +1,10 @@
+import { sceneConfig } from '../../data/scrollScene'
 import { clamp, lerp, smoothstep } from '../../lib/math'
-
-/**
- * 텍스트 정렬에 따라 피사체를 화면에서 반대쪽으로 밀어낸다.
- * 값은 뷰포트 비율 [오른쪽으로, 위로] — 카메라를 옮기는 대신 투영을 어긋내므로
- * 화각·거리와 무관하게 항상 같은 화면 비율만큼 이동한다.
- */
-const FRAME_BY_ALIGN = {
-  left: [0.17, 0],
-  right: [-0.17, 0],
-  center: [0, 0.14], // 텍스트가 아래로 가므로 피사체를 위로
-}
 
 /**
  * 섹션 목록에서 카메라 경로를 만든다.
  * 각 섹션 구간의 중앙(at)이 키프레임이고, 그 사이는 smoothstep 보간된다.
- * 섹션 길이는 변형마다 다르므로 경로도 변형마다 만들어진다.
+ * 스냅 변형은 이 at 지점을 이동 목표로 삼는다.
  */
 export function createCameraPath(sections) {
   const keyframes = sections.map((s) => ({
@@ -22,8 +12,9 @@ export function createCameraPath(sections) {
     position: s.camera.position,
     target: s.camera.target,
     fov: s.camera.fov,
-    // camera.frame 으로 섹션별 직접 지정도 가능하다
-    frame: s.camera.frame ?? FRAME_BY_ALIGN[s.align] ?? [0, 0],
+    // 텍스트와 겹치지 않게 피사체를 반대쪽으로 민다.
+    // 기본값은 정렬에서 오고, 섹션의 camera.frame 으로 개별 지정하면 그쪽이 이긴다.
+    frame: s.camera.frame ?? sceneConfig.framing.byAlign[s.align] ?? [0, 0],
   }))
 
   const first = keyframes[0]

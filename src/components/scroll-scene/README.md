@@ -64,6 +64,10 @@
 ```
 
 마음에 드는 값을 `sceneConfig` 에 적으면 된다 (`cameraDamping`, `snap.*`).
+
+`sceneConfig` 에는 조명(`lighting`)과 피사체 프레이밍(`framing`)도 들어 있다.
+실제 glTF 모델이 들어오면 조명은 반드시 다시 맞추게 되는데, 그때 컴포넌트가 아니라
+`data/scrollScene.js` 한 곳만 열면 된다. `SceneStage` 는 배선만 한다.
 `tune()` 은 프로덕션 빌드에서 인자를 그대로 돌려주는 함수로 접혀 아무 일도 하지 않는다.
 
 현재 기본값: `duration` 1100ms · `cameraDamping` 8 · `quietMs` 120 · `touchThreshold` 40px

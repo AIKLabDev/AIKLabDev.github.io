@@ -18,8 +18,7 @@ const DAMPING = tune('camDamp', sceneConfig.cameraDamping)
  * 초기 위치·화각은 Canvas 의 camera prop 이 firstKeyframe 으로 이미 세팅하므로
  * 첫 프레임부터 제자리에서 시작한다 (기본 카메라에서 날아오는 현상 없음).
  *
- * @param {object} path createCameraPath() 결과 — 섹션 길이가 변형마다 달라서
- *                      경로도 변형마다 만들어진다
+ * @param {object} path createCameraPath() 결과 (키프레임 + 보간 함수)
  */
 export default function CameraRig({ progress, path, compact = false }) {
   const sample = useRef(path.createSample())
@@ -54,8 +53,9 @@ export default function CameraRig({ progress, path, compact = false }) {
     // 카메라를 옮기는 대신 투영 창을 어긋내므로(setViewOffset) 구도 자체는 유지된다.
     // 좁은 화면에서는 텍스트가 아래로 가므로 좌우 대신 위로만 민다.
     const { width, height } = state.size
-    const fx = compact ? 0 : s.frame[0]
-    const fy = compact ? 0.17 : s.frame[1]
+    const [cfx, cfy] = sceneConfig.framing.compact
+    const fx = compact ? cfx : s.frame[0]
+    const fy = compact ? cfy : s.frame[1]
     cam.setViewOffset(width, height, -fx * width, fy * height, width, height)
   })
 
