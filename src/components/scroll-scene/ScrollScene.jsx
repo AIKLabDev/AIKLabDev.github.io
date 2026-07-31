@@ -99,8 +99,12 @@ function ScrollCanvas() {
    * 여기서 window.scrollY 를 읽으면 안 된다. 브라우저의 스크롤 복원은 마운트
    * 뒤에 일어나므로 이 시점 값은 새로고침이어도 항상 0 이다(실제로 이걸로
    * 한 번 틀렸다). 그래서 떠날 때 위치를 우리가 적어두고 그걸 본다.
+   *
+   * 해시를 달고 들어온 경우(/#about 등)도 마찬가지다 — 히어로를 건너뛰겠다고
+   * 지목해서 들어온 사람이다. HashScroll 이 그 위치로 옮기는 것과 로딩 화면이
+   * 스크롤을 잠그는 것이 부딪히기도 한다.
    */
-  const [showLoader] = useState(() => readLastScroll() < window.innerHeight * 0.5)
+  const [showLoader] = useState(() => !window.location.hash && readLastScroll() < window.innerHeight * 0.5)
 
   /**
    * 페이지를 떠날 때 위치를 적어두고, 캔버스를 감춘다.

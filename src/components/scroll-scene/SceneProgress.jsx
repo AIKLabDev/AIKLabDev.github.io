@@ -14,6 +14,7 @@ import { clamp } from '../../lib/math'
 export default function SceneProgress({ subscribe, sections, showSkip = true }) {
   const step = useRef(null)
   const bar = useRef(null)
+  const skip = useRef(null)
 
   useEffect(
     () =>
@@ -25,6 +26,14 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
         const label = String(i + 1).padStart(2, '0')
         if (step.current && step.current.textContent !== label) step.current.textContent = label
         if (bar.current) bar.current.style.transform = `scaleX(${clamp(p, 0, 1)})`
+
+        // 마지막 전환이 시작되면 건너뛰기 링크를 아예 뗀다.
+        // 이 층은 opacity 로 걷히는데 opacity 0 은 클릭을 막지 못한다. 그대로 두면
+        // 3D 가 사라진 뒤에도 우하단에 보이지 않는 링크가 남아, 그 자리를 누르면
+        // 주소가 #about 으로 바뀐다. 상위에서 pointer-events 를 꺼도 이 링크는
+        // pointer-events-auto 를 명시하고 있어 덮어쓴다 — 링크 자신을 꺼야 한다.
+        // visibility 면 탭 순서와 접근성 트리에서도 함께 빠진다.
+        if (skip.current) skip.current.style.visibility = p > sceneConfig.outro.from ? 'hidden' : ''
       }),
     [subscribe, sections],
   )
@@ -53,6 +62,7 @@ export default function SceneProgress({ subscribe, sections, showSkip = true }) 
 
         {showSkip && (
           <a
+            ref={skip}
             href={sceneConfig.skipTarget}
             // 모바일에서 제일 필요한 버튼이다. 터치 타겟을 44px 이상으로 확보하되
             // 음수 마진으로 시각적 위치는 유지한다.
