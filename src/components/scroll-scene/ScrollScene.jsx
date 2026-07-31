@@ -15,6 +15,7 @@ import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { mixHex } from '../../lib/color'
 import { setHeroReveal } from '../../lib/heroChrome'
 import { clamp } from '../../lib/math'
+import { readLastScroll, writeLastScroll } from '../../lib/lastScroll'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
 import { useSectionSnap } from '../../hooks/useSectionSnap'
 import { reportExposure, resolveVariant } from '../../lib/abTest'
@@ -87,6 +88,27 @@ function ScrollCanvas() {
   const compact = useIsCompact()
   const [firstFrame, setFirstFrame] = useState(false)
   const { progress, subscribe } = useScrollProgress(outer, sticky)
+
+  /**
+   * 로딩 화면을 띄울지 마운트 시점에 한 번 정한다.
+   *
+   * 히어로에서 한참 아래, 실제 콘텐츠를 읽던 사람에게는 띄우지 않는다 —
+   * 3D 를 기다리는 중이 아니라 이미 지나온 사람인데, 로딩 화면이 스크롤까지
+   * 잠그면 페이지가 고장난 것으로 보인다.
+   *
+   * 여기서 window.scrollY 를 읽으면 안 된다. 브라우저의 스크롤 복원은 마운트
+   * 뒤에 일어나므로 이 시점 값은 새로고침이어도 항상 0 이다(실제로 이걸로
+   * 한 번 틀렸다). 그래서 떠날 때 위치를 우리가 적어두고 그걸 본다.
+   */
+  const [showLoader] = useState(() => readLastScroll() < window.innerHeight * 0.5)
+  useEffect(() => {
+    const save = () => writeLastScroll(window.scrollY)
+    window.addEventListener('pagehide', save)
+    return () => {
+      save()
+      window.removeEventListener('pagehide', save)
+    }
+  }, [])
 
   // 변형은 마운트 때 한 번만 정한다. 도중에 바뀌면 스크롤 높이가 달라져
   // 보고 있던 위치가 튄다.
@@ -234,7 +256,7 @@ function ScrollCanvas() {
         </div>
 
         <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions />
-        <SceneLoader ready={firstFrame} />
+        {showLoader && <SceneLoader ready={firstFrame} />}
       </div>
     </section>
   )

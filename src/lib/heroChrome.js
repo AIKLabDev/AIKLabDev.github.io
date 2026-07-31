@@ -1,3 +1,5 @@
+import { readLastScroll } from './lastScroll'
+
 /**
  * 히어로가 헤더에게 "지금 얼마나 웹페이지처럼 보여야 하는가" 를 알리는 통로.
  *
@@ -12,10 +14,15 @@
  * 헤더가 완전한 모습으로 한 번 그려진 뒤 감춰져서, 새로고침할 때마다 상단 메뉴가
  * 번쩍인다. effect 로 감추는 것은 이미 늦다 — 첫 페인트부터 감춰져 있어야 한다.
  *
+ * 스크롤 위치도 같이 본다. 새로고침하면 브라우저가 위치를 복원하는데, 히어로를
+ * 이미 지나 실제 콘텐츠를 읽던 사람에게는 평범한 헤더가 정답이다. 경로만 보면
+ * 그 사람의 첫 페인트에서 메뉴가 사라졌다가 스크롤 구독이 붙은 뒤에야 돌아온다.
+ *
  * 여기서 경로를 아는 것은 결합이다. 히어로가 '/' 외의 경로로 옮겨가면 같이 고쳐야 한다.
  */
 const HERO_PATH = '/'
-let reveal = typeof window !== 'undefined' && window.location.pathname === HERO_PATH ? 0 : 1
+const atHeroStart = () => window.location.pathname === HERO_PATH && readLastScroll() < window.innerHeight * 0.5
+let reveal = typeof window !== 'undefined' && atHeroStart() ? 0 : 1
 const listeners = new Set()
 
 export function setHeroReveal(value) {

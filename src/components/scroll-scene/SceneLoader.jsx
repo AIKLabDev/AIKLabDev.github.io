@@ -14,6 +14,12 @@ import { sceneConfig } from '../../data/scrollScene'
  * 상단 로고와 중복되므로, 상단 것을 그대로 살리고 로더는 배경만 덮는다.
  * 히어로에서는 어차피 메뉴가 감춰져 있어 로딩 중에 누를 것도 없다.
  *
+ * fixed 가 아니라 absolute 인 것이 중요하다. fixed 로 두면 화면 전체를 덮는데,
+ * 새로고침할 때 브라우저가 스크롤 위치를 복원하므로 히어로를 한참 지나 실제
+ * 콘텐츠를 읽던 사람의 화면까지 통째로 덮어버린다(스크롤 잠금까지 걸려서
+ * 페이지가 고장난 것으로 보였다). absolute 면 히어로 sticky 박스 안에 갇히므로
+ * 히어로가 화면 밖일 때는 자연히 보이지 않는다.
+ *
  * 표시는 화면 가운데가 아니라 좌하단 — 로딩이 끝나면 같은 자리에 진행 표시
  * (01 / 08)가 들어선다. 같은 자리가 "불러오는 중" 에서 "몇 번째" 로 이어진다.
  */
@@ -53,7 +59,7 @@ export default function SceneLoader({ ready }) {
       role="status"
       aria-live="polite"
       aria-busy={!hidden}
-      className={`fixed inset-0 z-40 bg-ink-950 transition-opacity duration-500 ${
+      className={`absolute inset-0 z-40 bg-ink-950 transition-opacity duration-500 ${
         hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
     >
