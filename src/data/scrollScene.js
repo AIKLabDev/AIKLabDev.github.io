@@ -72,13 +72,11 @@ export const scrollModel = {
 
 export const sceneConfig = {
   /**
-   * 변형 A 에서 모든 섹션이 공통으로 쓰는 스크롤 높이(svh).
-   * 변형 B 는 섹션마다 정의된 vh 를 쓴다.
+   * 카메라 추종 감쇠 계수 — 클수록 즉각적, 작을수록 부드럽다.
+   * 스냅 변형에서는 스크롤 자체가 0.7초 이징으로 움직이므로, 이 값이 낮으면
+   * 이징이 이중으로 걸려 끈적하게 느껴진다. 그래서 연속 변형 기준(6)보다 높게 잡았다.
    */
-  vhPerSection: 90,
-
-  /** 카메라 추종 감쇠 계수 — 클수록 즉각적, 작을수록 부드럽다. */
-  cameraDamping: 6,
+  cameraDamping: 11,
 
   /** 포인터 패럴랙스 강도(0이면 끔). */
   parallax: 0.18,
@@ -88,39 +86,49 @@ export const sceneConfig = {
 
   /** 건너뛰기 링크가 향하는 곳 — 히어로 바로 다음 섹션. */
   skipTarget: '#about',
+
+  /** 섹션 스냅 (변형 snap 에서만) */
+  snap: {
+    /** 한 섹션 이동에 걸리는 시간(ms) */
+    duration: 700,
+    /**
+     * 애니메이션이 끝난 뒤 추가로 잠가두는 시간(ms).
+     * 트랙패드 관성 이벤트가 잦아들기를 기다린다 — 이게 없으면 한 번 튕겼는데
+     * 두세 섹션이 연속으로 넘어간다.
+     */
+    quietMs: 120,
+    /** 터치 스와이프가 한 섹션으로 인정되는 최소 이동(px) */
+    touchThreshold: 40,
+  },
 }
 
 /* ------------------------------------------------------------------ */
 /* A/B 변형                                                            */
 /* ------------------------------------------------------------------ */
 
-export const EXPERIMENT_ID = 'hero_scroll_story'
-export const VARIANT_PARAM = 'hero' // ?hero=B 로 강제 지정
+export const EXPERIMENT_ID = 'hero_scroll_snap'
+export const VARIANT_PARAM = 'hero' // ?hero=flow / ?hero=snap 으로 강제 지정
 export const VARIANT_STORAGE_KEY = 'aikorea.hero.variant'
-export const DEFAULT_VARIANT = 'A'
+export const DEFAULT_VARIANT = 'flow'
 
 /**
  * 무엇을 비교하는가:
- * 7화면이 넘는 스크롤 서사에서, 진행 상황을 알려주고 빠져나갈 길을 주는 것이
- * 이탈을 줄이는가 늘리는가. (web.auto 는 "Scroll to Explore 03|10 · Skip Features"
- * 를 항상 띄우고, 스텝마다 개별 CTA 를 붙인다)
+ * 휠 한 번에 한 섹션씩 끊어 넘기는 것(web.auto 방식)이 연속 스크롤보다
+ * 서사를 잘 전달하는가, 아니면 스크롤을 빼앗겨 답답하다고 느끼게 하는가.
+ *
+ * 진행 표시·건너뛰기·섹션별 길이·섹션 CTA 는 이제 양쪽 공통이다
+ * (그 비교는 끝났고 채택됐다).
  */
 export const heroVariants = {
-  A: {
-    label: '기준안',
-    description: '균일한 섹션 길이 · 진행 표시 없음 · 마지막 섹션에만 CTA',
-    progressIndicator: false,
-    skipLink: false,
-    perSectionLength: false,
-    sectionActions: false,
+  flow: {
+    label: '연속 스크롤',
+    description: '브라우저 기본 스크롤. 휠을 굴린 만큼 진행률이 따라간다.',
+    snap: false,
   },
-  B: {
-    label: 'web.auto 형',
-    description: '진행 표시 + 건너뛰기 · 섹션별 스크롤 길이 · 섹션마다 CTA',
-    progressIndicator: true,
-    skipLink: true,
-    perSectionLength: true,
-    sectionActions: true,
+  snap: {
+    label: '섹션 스냅',
+    description: '휠·키·스와이프 한 번에 한 섹션씩. 브라우저 기본 스크롤을 가로챈다.',
+    snap: true,
   },
 }
 
@@ -129,12 +137,13 @@ export const heroVariants = {
 /* ------------------------------------------------------------------ */
 
 /**
- * vh:     이 섹션이 차지하는 스크롤 높이(svh). 변형 B 에서만 쓰인다.
+ * vh:     이 섹션이 차지하는 스크롤 높이(svh).
  *         진행률 구간(range)은 이 길이들로부터 계산된다 — 손으로 적지 않는다.
  *         길이와 구간을 따로 적으면 언젠가 반드시 어긋난다.
  * camera: 그 섹션 한가운데에서의 카메라 상태. 키프레임 사이는 smoothstep 보간된다.
- * action: 변형 B 에서 섹션마다 노출되는 링크 하나.
- * actions: 마지막 섹션의 주 CTA 묶음 (변형과 무관하게 항상 노출).
+ *         스냅 변형은 이 지점(range 의 중앙)으로 정확히 이동한다.
+ * action: 섹션마다 노출되는 보조 링크 하나.
+ * actions: 마지막 섹션의 주 CTA 묶음.
  */
 export const scrollSections = [
   {

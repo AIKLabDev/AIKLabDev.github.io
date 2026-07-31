@@ -11,6 +11,7 @@ import {
 } from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { useScrollProgress } from '../../hooks/useScrollProgress'
+import { useSectionSnap } from '../../hooks/useSectionSnap'
 import { reportExposure, resolveVariant } from '../../lib/abTest'
 import { isWebGLAvailable } from '../../lib/webgl'
 import Hero from '../Hero'
@@ -21,8 +22,7 @@ import SceneModel from './SceneModel'
 import SceneOverlay from './SceneOverlay'
 import SceneProgress from './SceneProgress'
 import SceneStage from './SceneStage'
-import ScrollHint from './ScrollHint'
-import { getSectionPlan } from './sectionPlan'
+import { cameraPath, sections, totalVh } from './sectionPlan'
 
 /**
  * 스크롤 연동 3D 히어로.
@@ -32,7 +32,7 @@ import { getSectionPlan } from './sectionPlan'
  * 라우팅이 전부 평소대로 동작한다. (drei ScrollControls 를 쓰지 않는 이유)
  *
  * 장면 내용은 src/data/scrollScene.js 가 정본이고, A/B 변형은 heroVariants 가
- * 정의한다. ?hero=A / ?hero=B 로 강제 지정할 수 있다(선택은 저장되어 유지된다).
+ * 정의한다. ?hero=flow / ?hero=snap 으로 강제 지정할 수 있다(선택은 저장되어 유지된다).
  */
 
 // 모델 경로는 런타임에 바뀌지 않으므로 모듈 수준에서 한 번만 고른다 (훅 순서 안전)
@@ -67,8 +67,12 @@ function ScrollCanvas() {
     }),
   )
   const variantKey = assignment.variant
+  const variant = heroVariants[variantKey] ?? heroVariants[DEFAULT_VARIANT]
 
-  const { variant, sections, totalVh, cameraPath } = getSectionPlan(variantKey)
+  // 휠·키·스와이프 한 번에 한 섹션씩 (변형 snap 에서만).
+  // 진행률을 실제 문서 스크롤에서 읽는 구조라 스크롤 위치만 옮기면
+  // 카메라와 텍스트는 알아서 따라온다 — 별도 배선이 없다.
+  useSectionSnap({ enabled: variant.snap, outerRef: outer, stickyRef: sticky, sections })
 
   // 3D 가 실제로 렌더되는 사용자만 실험에 넣는다.
   // ref 로 한 번만 쏜다 — StrictMode 는 개발 중 effect 를 두 번 실행하고,
@@ -142,15 +146,8 @@ function ScrollCanvas() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,16,31,0.7)_100%)]"
         />
 
-        <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions={variant.sectionActions} />
-
-        {/* 진행 표시(B)와 스크롤 유도(A)는 같은 자리를 쓰므로 배타적이다 */}
-        {variant.progressIndicator ? (
-          <SceneProgress subscribe={subscribe} sections={sections} showSkip={variant.skipLink} />
-        ) : (
-          <ScrollHint subscribe={subscribe} />
-        )}
-
+        <SceneOverlay subscribe={subscribe} sections={sections} showSectionActions />
+        <SceneProgress subscribe={subscribe} sections={sections} />
         <SceneLoader />
       </div>
     </section>
