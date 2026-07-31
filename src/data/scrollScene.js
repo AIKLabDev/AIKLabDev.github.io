@@ -339,6 +339,14 @@ export const heroVariants = {
  * action: 섹션마다 노출되는 보조 링크 하나.
  * actions: 마지막 섹션의 주 CTA 묶음.
  */
+/**
+ * 히어로 8장.
+ *
+ * eyebrow 에 번호를 넣지 않는다. 번호는 진행 표시(SceneProgress)의 "02 / 08"
+ * 하나만 쓴다 — 예전에는 eyebrow 가 "01 · AUTONOMOUS DRIVING" 처럼 자체 번호를
+ * 달고 있었는데, eyebrow 는 가운데 본문 6장만 세고 진행 표시는 앞뒤(intro/join)를
+ * 포함한 8장을 세어서 한 칸씩 어긋나 보였다. 세는 대상이 다르면 반드시 어긋난다.
+ */
 export const scrollSections = [
   {
     id: 'intro',
@@ -352,7 +360,7 @@ export const scrollSections = [
   },
   {
     id: 'autonomy',
-    eyebrow: '01 · AUTONOMOUS DRIVING',
+    eyebrow: 'AUTONOMOUS DRIVING',
     title: ['지게차가 스스로', '창고를 다닙니다'],
     body: '후륜 조향 산업 차량의 경로 계획과 주행 제어, LiDAR·카메라·IMU·엔코더를 융합한 위치 추정으로 작업자 조작 없이 이동합니다.',
     align: 'left',
@@ -362,7 +370,7 @@ export const scrollSections = [
   },
   {
     id: 'perception',
-    eyebrow: '02 · PERCEPTION & DOCKING',
+    eyebrow: 'PERCEPTION & DOCKING',
     title: ['팔레트를 찾아', '정확히 파고듭니다'],
     body: '3D 비전으로 팔레트의 위치와 자세를 인식하고, 포크 승강 제어를 자율주행과 연동해 센티미터 단위로 도킹합니다.',
     align: 'left',
@@ -373,7 +381,7 @@ export const scrollSections = [
   },
   {
     id: 'manipulation',
-    eyebrow: '03 · MANIPULATION',
+    eyebrow: 'MANIPULATION',
     title: ['화물을 인식하고', '쌓아 올립니다'],
     body: '4축·6축 산업용 로봇의 모션 계획과 제어, 로봇–카메라 좌표계 정합, 혼합 팔레타이징의 적재 순서와 배치를 판단합니다.',
     align: 'right',
@@ -384,7 +392,7 @@ export const scrollSections = [
   },
   {
     id: 'simulation',
-    eyebrow: '04 · DIGITAL TWIN',
+    eyebrow: 'DIGITAL TWIN',
     title: ['현장에 나가기 전에', '가상 환경에서 검증합니다'],
     body: 'NVIDIA Isaac Sim 위에 창고와 설비를 3D로 재현하고, 센서 모델과 제어 응답까지 맞춘 뒤 실물로 이관합니다.',
     align: 'right',
@@ -394,7 +402,7 @@ export const scrollSections = [
   },
   {
     id: 'fleet',
-    eyebrow: '05 · FLEET CONTROL',
+    eyebrow: 'FLEET CONTROL',
     title: ['여러 대가 동시에 움직이는', '현장을 관제합니다'],
     body: '로봇의 위치와 상태를 실시간으로 확인하고, 미션을 생성해 배차하며, 다수 로봇의 교통과 작업 순서를 조율합니다.',
     align: 'center',
@@ -404,7 +412,7 @@ export const scrollSections = [
   },
   {
     id: 'team',
-    eyebrow: '06 · HOW WE WORK',
+    eyebrow: 'HOW WE WORK',
     title: ['기술을 나누지 않고', '문제를 기준으로 연결합니다'],
     body: '기계 설계, 전장, 로봇 소프트웨어, 인공지능 비전과 관제를 서로 분리된 기술로 보지 않습니다. 현장의 문제에서 출발해 하나의 자동화 시스템으로 완성합니다.',
     align: 'left',
