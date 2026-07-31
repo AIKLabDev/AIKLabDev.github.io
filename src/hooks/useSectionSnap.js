@@ -39,6 +39,11 @@ const ABORT_GRACE_MS = 180
  * 5) ctrl+휠(브라우저 확대)과 가로 스크롤은 우리 것이 아니다. 건드리지 않는다.
  * 6) 애니메이션 도중 다른 주체(건너뛰기 링크, 스크롤바 드래그, Home 키)가
  *    스크롤을 옮기면 우리 쪽을 포기한다. 둘이 같은 값을 쓰면 떨린다.
+ * 7) 아래 콘텐츠에서 위로 튕겨 올려 되돌아올 때, 관성은 손가락을 뗀 뒤 브라우저가
+ *    스스로 굴리는 스크롤이라 이벤트가 오지 않는다. preventDefault 로 막을 대상이
+ *    없다는 뜻이다. 입력만 보고 있으면 관성이 히어로 전체를 훑고 첫 장까지
+ *    지나가버린다. 그래서 스크롤 위치 자체를 감시해, 밖에서 안으로 들어오는 순간
+ *    가장 가까운 섹션으로 잡아 세운다(= 관성을 우리 애니메이션으로 덮어쓴다).
  *
  * prefers-reduced-motion 사용자는 애초에 3D 히어로를 받지 않으므로
  * 이 훅도 마운트되지 않는다.
@@ -117,38 +122,48 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     /** 타이머 대신 시각을 비교한다 — 되감기는 타이머가 만든 얼어붙음을 구조적으로 없앤다. */
     const isLocked = () => animating.current || performance.now() < cooldownUntil.current
 
-    /**
-     * 개입 구간 진입 판정 + 재진입 흡수.
-     *
-     * 아래 콘텐츠에서 위로 스크롤해 돌아오면 네이티브 관성이 아직 살아 있다.
-     * 그 상태로 바로 스냅을 걸면 관성이 우리 애니메이션을 밀어내고(중단 가드 발동)
-     * 곧바로 다음 명령이 먹혀 섹션이 주르륵 넘어간다. 들어온 직후 잠깐 잠근다.
-     */
-    let wasInside = false
-    const enterRegion = () => {
-      const inside = inRegion()
-      if (inside && !wasInside) {
-        const now = performance.now()
-        cooldownUntil.current = Math.max(cooldownUntil.current, now + reentryMs)
-        cooldownHardUntil.current = Math.max(cooldownHardUntil.current, now + reentryMs)
-      }
-      wasInside = inside
-      return inside
+    /** 히어로 기준 현재 위치 */
+    const regionOf = () => {
+      const { top, travel } = metrics()
+      if (window.scrollY < top - 1) return 'above'
+      if (window.scrollY > top + travel + 1) return 'below'
+      return 'inside'
     }
 
-    const endAnimation = () => {
+    /** 진행률에 가장 가까운 섹션 */
+    const nearestIndex = () => {
+      const p = progressNow()
+      let best = 0
+      let bestDist = Infinity
+      for (let i = 0; i < sections.length; i++) {
+        const d = Math.abs(sections[i].at - p)
+        if (d < bestDist) {
+          bestDist = d
+          best = i
+        }
+      }
+      return best
+    }
+
+    const endAnimation = (extraLock = 0) => {
       animating.current = false
       const now = performance.now()
-      cooldownUntil.current = now + quietMs
-      cooldownHardUntil.current = now + maxQuietMs
+      cooldownUntil.current = now + Math.max(quietMs, extraLock)
+      cooldownHardUntil.current = now + Math.max(maxQuietMs, extraLock)
     }
 
-    const animateTo = (y) => {
+    /**
+     * @param {number} y 목표 스크롤 위치
+     * @param {number} extraLock 끝난 뒤 추가로 잠글 시간(ms).
+     *        관성으로 되돌아온 직후에 쓴다 — 잔여 관성과 이어지는 스와이프가
+     *        곧바로 다음 섹션을 트리거하는 것을 막는다.
+     */
+    const animateTo = (y, extraLock = 0) => {
       cancelAnimationFrame(rafId.current)
 
       const from = window.scrollY
       const dist = y - from
-      if (Math.abs(dist) < 1) return endAnimation()
+      if (Math.abs(dist) < 1) return endAnimation(extraLock)
 
       animating.current = true
       const start = performance.now()
@@ -159,7 +174,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
         // 다만 초반 유예를 둔다 — 재진입 직후에는 네이티브 관성이 아직 남아 있어서
         // 유예가 없으면 시작하자마자 중단되고, 그게 연쇄 넘김의 원인이 된다.
         if (expected !== null && now - start > ABORT_GRACE_MS && Math.abs(window.scrollY - expected) > 2) {
-          return endAnimation()
+          return endAnimation(extraLock)
         }
 
         const t = Math.min(1, (now - start) / duration)
@@ -169,7 +184,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
         expected = window.scrollY // 브라우저가 클램프할 수 있으니 실제 반영값을 기준으로 삼는다
 
         if (t < 1) rafId.current = requestAnimationFrame(step)
-        else endAnimation() // 애니메이션 종료 ≠ 해제. 관성이 잦아들 시간을 조금 더 준다.
+        else endAnimation(extraLock) // 애니메이션 종료 ≠ 해제. 관성이 잦아들 시간을 조금 더 준다.
       }
       rafId.current = requestAnimationFrame(step)
     }
@@ -194,10 +209,28 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       }
     }
 
+    /**
+     * 관성으로 되돌아오는 것을 잡아 세운다.
+     *
+     * 아래 콘텐츠에서 위로 튕겨 올리면, 손가락을 뗀 뒤에도 브라우저가 스스로
+     * 스크롤을 계속한다. 이때는 wheel·touch 이벤트가 오지 않으므로 입력을 막는
+     * 방식으로는 손을 쓸 수 없다. 스크롤 위치를 감시하다가 히어로에 들어오는
+     * 순간 가장 가까운 섹션으로 애니메이션하면, 그 scrollTo 가 관성을 덮어써
+     * 그 자리에서 멈춘다.
+     */
+    let region = null
+    const onScroll = () => {
+      const prev = region
+      region = regionOf()
+      if (prev === 'below' && region === 'inside' && !animating.current) {
+        animateTo(targetFor(nearestIndex()), reentryMs)
+      }
+    }
+
     const onWheel = (e) => {
       if (e.ctrlKey) return // 브라우저 확대 — 우리 것이 아니다
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return // 가로 스크롤
-      if (!enterRegion()) return
+      if (!inRegion()) return
 
       const now = performance.now()
       if (isLocked()) {
@@ -211,7 +244,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     const onKeyDown = (e) => {
-      if (!enterRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
+      if (!inRegion() || isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
 
       let dir
       if (e.key === 'ArrowDown' || e.key === 'PageDown') dir = 1
@@ -238,7 +271,7 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
     }
 
     const onTouchMove = (e) => {
-      if (!enterRegion()) return
+      if (!inRegion()) return
       const t = e.touches[0]
       if (!t) return
 
@@ -266,12 +299,14 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
 
     // passive: false 가 핵심이다. 없으면 preventDefault 가 조용히 무시된다.
     const opts = { passive: false }
+    window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('wheel', onWheel, opts)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, opts)
 
     return () => {
+      window.removeEventListener('scroll', onScroll)
       window.removeEventListener('wheel', onWheel, opts)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('touchstart', onTouchStart)
