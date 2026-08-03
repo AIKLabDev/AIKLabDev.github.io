@@ -38,19 +38,20 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="주요 섹션">
-          {nav.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-ink-900/65 transition-colors hover:bg-brand-50 hover:text-brand-600"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+        {/* 내비게이션은 CTA 바로 옆에 붙여 오른쪽 한 덩어리로 읽히게 둔다. */}
+        <div className="flex items-center gap-2 lg:gap-4">
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="주요 섹션">
+            {nav.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-md px-3 py-2 text-sm font-medium text-ink-900/65 transition-colors hover:bg-brand-50 hover:text-brand-600"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
 
-        <div className="flex items-center gap-2">
           <Button href="/#positions" size="sm" className="hidden sm:inline-flex">
             채용 공고 보기
           </Button>

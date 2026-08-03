@@ -12,10 +12,9 @@ export const site = {
  * 홈에서는 같은 경로이므로 리로드 없이 스크롤만 이동한다.
  */
 export const nav = [
-  { label: '회사 소개', href: '/#about' },
-  { label: '하는 일', href: '/#what-we-do' },
-  { label: '일하는 방식', href: '/#how-we-work' },
-  { label: '프로젝트', href: '/#projects' },
-  { label: '채용 공고', href: '/#positions' },
-  { label: '팀 문화', href: '/#culture' },
+  { label: 'Tech', href: '/#what-we-do' },
+  { label: 'Projects', href: '/#projects' },
+  { label: 'Process', href: '/#how-we-work' },
+  { label: 'Jobs', href: '/#positions' },
+  { label: 'Culture', href: '/#culture' },
 ]

@@ -11,10 +11,9 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <About />
       <Domains />
-      <Pipeline />
       <Projects />
+      <Pipeline />
       <Jobs />
       <Culture />
       <Contact />
