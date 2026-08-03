@@ -12,12 +12,14 @@ function ProjectCard({ project }) {
         <MediaRaw item={project.media} />
       </div>
 
-      <div className="flex flex-1 flex-col p-6">
-        <h3 className="text-[1.0625rem] leading-snug font-bold text-ink-900">{project.title}</h3>
-        <p className="mt-2.5 text-[0.8125rem] leading-relaxed text-ink-900/70">{project.lead}</p>
-        <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-900/55">{project.detail}</p>
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="text-[0.9375rem] leading-snug font-bold text-ink-900">{project.title}</h3>
+        {/* body 안의 \n 을 줄바꿈으로 렌더링한다 */}
+        <p className="mt-2.5 whitespace-pre-line text-justify text-[0.8125rem] leading-relaxed text-ink-900/70">
+          {project.body}
+        </p>
 
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-5">
+        <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
           {project.tags.map((t) => (
             <Tag key={t}>{t}</Tag>
           ))}
@@ -32,12 +34,12 @@ export default function Projects() {
     <Section id="projects">
       <SectionHead
         eyebrow="Our Projects"
-        title="지금 개발하고 있는 것들"
-        description="에이아이코리아 로봇 연구개발 조직에서 현재 진행하고 있는 주요 프로젝트입니다."
+        title="AIKOREA의 주요 프로젝트"
+        description="로봇 기술의 가능성을 넓혀 온 AIKOREA의 주요 프로젝트를 만나보세요."
         action={<ArrowLink href="#positions">관련 포지션 보기</ArrowLink>}
       />
 
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:mt-14">
+      <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3">
         {projects.map((p) => (
           <ProjectCard key={p.id} project={p} />
         ))}

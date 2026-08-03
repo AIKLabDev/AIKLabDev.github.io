@@ -1,6 +1,13 @@
 /**
  * "지금 개발하고 있는 것들" — 로봇 연구개발 조직이 진행 중인 주요 프로젝트.
  *
+ * 서술 층위가 섹션마다 겹치지 않도록 나눈다.
+ *   techAreas.js  다루는 기술 영역과 역량 (하는 일)
+ *   body          이 프로젝트로 무엇을 만들고 있고, 무엇이 까다로운가.
+ *                 techAreas 의 역량 나열을 반복하지 않는다
+ *   tags          무엇으로 만드는가 — 실제 쓰는 도구·프레임워크·라이브러리만 적는다.
+ *                 언어와 센서·하드웨어는 넣지 않는다 (공고의 stack 에서 다룬다)
+ *
  * media.kind
  *   'loop'    자동 재생되는 짧은 무음 루프 (webm, 용량 작음)
  *   'clip'    포스터 + 클릭 재생 (mp4, preload 안 함)
@@ -10,11 +17,9 @@
 export const projects = [
   {
     id: 'amr-forklift',
-    title: 'AMR 지게차 자율주행',
-    lead: '산업용 지게차가 창고와 공장 안에서 스스로 이동하고 팔레트를 운반하도록 개발합니다.',
-    detail:
-      '일반적인 차동구동 AMR과 다른 지게차의 후륜 조향 특성을 반영해 경로 계획과 제어 알고리즘을 구성합니다. 팔레트를 인식한 뒤 포크 삽입 위치까지 정밀하게 접근하는 도킹 기술도 함께 개발합니다.',
-    tags: ['ROS2', 'Nav2', 'RTAB-Map', '센서 퓨전', '주행 제어', '정밀 도킹'],
+    title: '자율주행 AMR 지게차',
+    body: '창고와 공장에서 팔레트를 자동으로 운반하는 자율주행 지게차를 개발합니다. 주행 알고리즘을 시뮬레이션에서 검증한 뒤 실제 장비에 적용하며, 다양한 현장 환경에 맞춰 성능을 고도화하고 있습니다.',
+    tags: ['ROS2', 'Nav2', 'TEB', 'RTAB-Map', 'Isaac Sim'],
     media: {
       kind: 'loop',
       src: '/media/forklift-real.webm',
@@ -23,41 +28,36 @@ export const projects = [
     },
   },
   {
-    id: 'warehouse-twin',
-    title: '창고 디지털 트윈',
-    lead: '로봇과 작업 환경을 NVIDIA Isaac Sim에 구현해 실제 장비 투입 전에 동작을 확인합니다.',
-    detail: '창고 구조와 센서 배치를 가상 환경에 구성하고, 자율주행·충돌 회피·로봇 작업 동작을 반복 검증합니다.',
-    tags: ['Isaac Sim', 'OpenUSD', 'URDF', 'ROS2 Bridge', 'Sim-to-Real'],
+    id: 'sim-to-real',
+    title: '로봇 시뮬레이션과 Sim-to-Real',
+    body: '현장과 유사한 가상 환경에서 로봇의 주행과 작업, 센서 반응을 검증합니다. 검증한 알고리즘을 실물 로봇에 적용하며 시뮬레이션과 실제 환경의 차이를 줄여가고 있습니다.',
+    tags: ['Isaac Sim', 'OpenUSD', 'URDF', 'SolidWorks'],
     media: {
-      kind: 'image',
-      src: '/media/isaacsim-warehouse.jpg',
-      caption: 'Isaac Sim으로 재현한 창고 랙 구조',
+      kind: 'loop',
+      src: '/media/forklift-nav2-driving.webm',
+      poster: '/media/forklift-nav2-driving.jpg',
+      caption: 'Isaac Sim 창고에서 Nav2 자율주행 검증 — 좌측은 LiDAR 스캔, 우측은 추적 카메라',
     },
   },
   {
     id: 'palletizing',
     title: '팔레타이징 자동화',
-    lead: '산업용 로봇과 3D 비전을 이용해 크기와 형태가 다른 제품을 팔레트에 적재합니다.',
-    detail:
-      '카메라로 제품의 위치와 자세를 인식하고, 로봇이 제품을 집을 위치와 적재 순서를 계산합니다. 하나의 규격만 반복해서 쌓는 작업뿐 아니라 여러 규격의 제품이 섞인 작업도 다룹니다.',
-    tags: ['3D 비전', '로봇 매니퓰레이션', '모션 계획', '혼합 팔레타이징'],
+    body: '산업용 로봇과 3D 비전을 활용해 다양한 크기와 형태의 제품을 팔레트에 자동으로 적재합니다. 제품의 위치와 규격을 인식하고, 적재 순서와 로봇의 동작 경로를 계산합니다.',
+    tags: ['MoveIt', 'ROS2', 'Isaac Sim', 'OpenCV', 'PCL'],
     media: { kind: 'diagram', variant: 'palletizing', caption: 'Sim-to-Real 브리지 구조' },
   },
   {
     id: 'fleet-console',
-    title: 'AMR 관제 시스템',
-    lead: '여러 대의 로봇을 하나의 화면에서 관리하기 위한 관제 시스템입니다.',
-    detail:
-      '지도 위에서 차량 위치와 상태를 확인하고, 작업을 배차하며, 이동 구역과 안전 구역을 설정합니다. 차량의 영상과 장애 상태도 함께 확인할 수 있도록 개발하고 있습니다.',
-    tags: ['플릿 관리', '지도 편집', '미션 배차', '실시간 통신', '영상 관제'],
+    title: 'AMR 통합 관제 시스템',
+    body: '여러 대의 AMR을 한 화면에서 확인하고 제어할 수 있는 관제 시스템을 개발합니다. 로봇의 위치와 상태, 카메라 영상을 실시간으로 전달해 안정적인 현장 운영을 지원합니다.',
+    tags: ['FastAPI', 'React', 'WebSocket', 'WebRTC', 'MediaMTX'],
     media: { kind: 'image', src: '/media/fleet-surround.jpg', caption: 'AMR 서라운드 뷰 관제 화면' },
   },
   {
     id: 'mecanum-amr',
     title: '전방향 메카넘 AMR',
-    lead: '좁은 공간에서 전후·좌우와 대각선으로 이동할 수 있는 전방향 AMR을 개발합니다.',
-    detail: '소형 테스트 플랫폼을 이용해 센서, 자율주행 알고리즘과 관제 시스템을 빠르게 시험하고 검증합니다.',
-    tags: ['메카넘 구동', 'ROS2', '자율주행', '스테레오 비전'],
+    body: '전후·좌우·대각선으로 자유롭게 이동할 수 있는 전방향 AMR을 개발합니다. 좁은 공간에서도 유연하게 움직이며, 새로운 센서와 주행 알고리즘을 검증하는 플랫폼으로 활용하고 있습니다.',
+    tags: ['ROS2', 'Nav2', 'Isaac Sim'],
     media: {
       kind: 'loop',
       src: '/media/mecanum-real.webm',
@@ -66,12 +66,10 @@ export const projects = [
     },
   },
   {
-    id: 'calibration-rl',
-    title: '로봇 비전과 학습 기반 제어',
-    lead: '카메라가 인식한 공간과 로봇이 움직이는 공간을 정확하게 맞추고, 이를 실제 로봇 제어에 활용합니다.',
-    detail:
-      '3D 자세 추정, 카메라 캘리브레이션과 좌표 변환 기술을 개발하고 있으며, 시뮬레이션과 학습 기반 제어 기술의 실제 장비 적용 가능성도 검토하고 있습니다.',
-    tags: ['RGB-D', '3D 좌표 정합', '카메라 캘리브레이션', '강화학습'],
+    id: 'vision-control',
+    title: '로봇 비전 기반 제어',
+    body: '카메라로 인식한 위치 정보를 실제 로봇의 움직임과 연결하는 비전 기술을 개발합니다. 좌표계를 정밀하게 보정하고, 학습 기반 제어 기술의 현장 적용 가능성을 검증하고 있습니다.',
+    tags: ['ROS2', 'OpenCV', 'ZED SDK'],
     media: { kind: 'image', src: '/media/camera-calibration.jpg', caption: '실물 차량 카메라 캘리브레이션' },
   },
 ]
