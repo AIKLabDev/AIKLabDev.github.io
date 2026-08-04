@@ -3,6 +3,7 @@ import Footer from './components/Footer'
 import Header from './components/Header'
 import Home from './pages/Home'
 import JobDetail from './pages/JobDetail'
+import JobList from './pages/JobList'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/jobs" element={<JobList />} />
           <Route path="/jobs/:jobId" element={<JobDetail />} />
         </Routes>
       </main>

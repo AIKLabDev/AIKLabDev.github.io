@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import Icon from '../components/Icon'
-import { Badge, Button, Meta, Tag } from '../components/ui'
+import { ArrowLink, Badge, Button, Meta, Tag } from '../components/ui'
 import { hiringProcess, jobs } from '../data/jobs'
 import { site } from '../data/site'
 
@@ -50,13 +50,17 @@ export default function JobDetail() {
       {/* 공고 헤더 */}
       <div className="border-b border-ink-900/8 bg-white">
         <div className="container-page py-10 sm:py-14">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-900/55 hover:text-brand-600"
-          >
-            <Icon name="arrowRight" className="size-4 rotate-180" strokeWidth={2} />
-            채용 홈으로
-          </Link>
+          <nav className="flex items-center gap-2 text-sm font-medium text-ink-900/55" aria-label="현재 위치">
+            <Link to="/" className="hover:text-brand-600">
+              채용 홈
+            </Link>
+            <span className="text-ink-900/25" aria-hidden="true">
+              /
+            </span>
+            <Link to="/jobs" className="hover:text-brand-600">
+              채용 공고
+            </Link>
+          </nav>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Badge>{job.type}</Badge>
@@ -149,6 +153,9 @@ export default function JobDetail() {
                     </li>
                   ))}
               </ul>
+              <ArrowLink as={Link} to="/jobs" className="mt-5">
+                전체 공고 보기
+              </ArrowLink>
             </div>
           </aside>
         </div>

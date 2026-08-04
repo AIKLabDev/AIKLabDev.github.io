@@ -79,9 +79,10 @@ export function Button({ as = 'a', variant = 'primary', size = 'md', className =
 }
 
 /** 텍스트 + 화살표 링크 (섹션 우측 상단 "더 보기" 류) */
-export function ArrowLink({ children, dark = false, className = '', ...rest }) {
+export function ArrowLink({ as = 'a', children, dark = false, className = '', ...rest }) {
+  const Tag = as
   return (
-    <a
+    <Tag
       className={`group inline-flex items-center gap-1.5 text-sm font-semibold transition-colors ${
         dark ? 'text-accent-400 hover:text-white' : 'text-brand-600 hover:text-brand-700'
       } ${className}`}
@@ -93,7 +94,7 @@ export function ArrowLink({ children, dark = false, className = '', ...rest }) {
         className="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
         strokeWidth={2}
       />
-    </a>
+    </Tag>
   )
 }
 
@@ -119,7 +120,7 @@ export function Badge({ children, variant = 'brand' }) {
   }
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold ring-1 ring-inset ${variants[variant]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold whitespace-nowrap ring-1 ring-inset ${variants[variant]}`}
     >
       {children}
     </span>
