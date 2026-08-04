@@ -15,9 +15,6 @@ export default function Footer() {
               alt={`${site.name} 로고`}
               className="h-7 w-auto brightness-0 invert"
             />
-            <p className="mt-4 max-w-xs text-[0.8125rem] leading-relaxed text-brand-100/55">
-              AMR 지게차 · 팔레타이징 로봇과 이를 검증하는 디지털 트윈을 개발합니다.
-            </p>
             <div className="mt-5 flex flex-col gap-2">
               <a
                 href={`mailto:${site.email}`}

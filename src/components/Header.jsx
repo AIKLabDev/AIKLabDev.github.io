@@ -52,7 +52,7 @@ export default function Header() {
             ))}
           </nav>
 
-          <Button href="/#positions" size="sm" className="hidden sm:inline-flex">
+          <Button as={Link} to="/jobs" size="sm" className="hidden sm:inline-flex">
             채용 공고 보기
           </Button>
           <button
@@ -80,7 +80,7 @@ export default function Header() {
                 {item.label}
               </a>
             ))}
-            <Button href="/#positions" onClick={() => setMenuOpen(false)} className="my-3 sm:hidden">
+            <Button as={Link} to="/jobs" onClick={() => setMenuOpen(false)} className="my-3 sm:hidden">
               채용 공고 보기
             </Button>
           </div>
