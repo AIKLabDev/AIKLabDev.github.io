@@ -85,8 +85,13 @@ export const sceneConfig = {
   /** 섹션 텍스트가 페이드 인/아웃하는 구간 비율(0~0.5). */
   textFade: 0.28,
 
-  /** 건너뛰기 링크가 향하는 곳 — 히어로 바로 다음 섹션. */
-  skipTarget: '#about',
+  /**
+   * 건너뛰기 링크가 향하는 곳 — 히어로 바로 다음 섹션.
+   * About 섹션이 Home 구성에서 빠지면서(2026-08-03 섹션 순서 정리) 히어로
+   * 다음 섹션이 TechAreas(#what-we-do)로 바뀌었다. #about 그대로 두면
+   * 대상이 없어 클릭해도 아무 데도 가지 않는다.
+   */
+  skipTarget: '#what-we-do',
 
   /** 첫 접속 로딩 화면 */
   loading: {
@@ -340,12 +345,19 @@ export const heroVariants = {
  * actions: 마지막 섹션의 주 CTA 묶음.
  */
 /**
- * 히어로 8장.
+ * 히어로 6장.
  *
- * eyebrow 에 번호를 넣지 않는다. 번호는 진행 표시(SceneProgress)의 "02 / 08"
+ * 원래는 8장이었다 — 자율주행/도킹을 따로 두 장으로 나누고, 일하는 방식을
+ * 소개하는 장이 하나 더 있었다. 스크롤이 너무 길다는 지적을 받고 줄였다.
+ * 자율주행·도킹은 TechAreas 카드 01번(AMR 지게차 자율주행)이 애초에 "이동 +
+ * 정밀 접근"을 한 카드로 묶고 있어서, 히어로도 그에 맞춰 한 장으로 합쳤다.
+ * 일하는 방식 장은 통째로 뺐다 — Pipeline(#how-we-work)이 같은 얘기를 이미
+ * 더 구체적으로 하고 있어서, 히어로에서 예고편으로 한 번 더 다룰 이유가 약했다.
+ *
+ * eyebrow 에 번호를 넣지 않는다. 번호는 진행 표시(SceneProgress)의 "02 / 06"
  * 하나만 쓴다 — 예전에는 eyebrow 가 "01 · AUTONOMOUS DRIVING" 처럼 자체 번호를
- * 달고 있었는데, eyebrow 는 가운데 본문 6장만 세고 진행 표시는 앞뒤(intro/join)를
- * 포함한 8장을 세어서 한 칸씩 어긋나 보였다. 세는 대상이 다르면 반드시 어긋난다.
+ * 달고 있었는데, eyebrow 는 가운데 본문 4장만 세고 진행 표시는 앞뒤(intro/join)를
+ * 포함한 6장을 세어서 한 칸씩 어긋나 보였다. 세는 대상이 다르면 반드시 어긋난다.
  */
 export const scrollSections = [
   {
@@ -356,27 +368,18 @@ export const scrollSections = [
     align: 'left',
     vh: 100,
     camera: { position: [2.6, 2.1, 8.6], target: [0, 0.95, 0], fov: 42 },
-    action: { label: '회사 알아보기', href: '#about' },
+    action: { label: '회사 알아보기', href: '#what-we-do' },
   },
   {
     id: 'autonomy',
     eyebrow: 'AUTONOMOUS DRIVING',
-    title: ['지게차가 스스로', '창고를 다닙니다'],
-    body: '후륜 조향 산업 차량의 경로 계획과 주행 제어, LiDAR·카메라·IMU·엔코더를 융합한 위치 추정으로 작업자 조작 없이 이동합니다.',
+    title: ['지게차가 스스로 움직여', '팔레트에 정확히 닿습니다'],
+    body: '후륜 조향 산업 차량의 경로 계획과 주행 제어, LiDAR·카메라·IMU·엔코더 융합 위치 추정으로 작업자 조작 없이 이동하고, 3D 비전과 포크 승강 제어를 연동해 팔레트에 센티미터 단위로 도킹합니다.',
     align: 'left',
+    // 이동(넓은 샷)과 도킹(근접 디테일) 두 장을 한 장으로 합친 자리라, 카메라도
+    // 두 원래 키프레임의 중간값을 쓴다 — 어느 한쪽에 치우치지 않게.
     vh: 90,
-    camera: { position: [-5.6, 1.3, 4.8], target: [0, 0.75, 0], fov: 40 },
-    action: { label: '하는 일 보기', href: '#what-we-do' },
-  },
-  {
-    id: 'perception',
-    eyebrow: 'PERCEPTION & DOCKING',
-    title: ['팔레트를 찾아', '정확히 파고듭니다'],
-    body: '3D 비전으로 팔레트의 위치와 자세를 인식하고, 포크 승강 제어를 자율주행과 연동해 센티미터 단위로 도킹합니다.',
-    align: 'left',
-    // 근접 디테일 샷 — 오래 붙들 이유가 없다
-    vh: 75,
-    camera: { position: [-2.5, 0.85, 4.4], target: [0.1, 0.7, 0.8], fov: 34 },
+    camera: { position: [-4.1, 1.1, 4.6], target: [0.05, 0.72, 0.4], fov: 37 },
     action: { label: '하는 일 보기', href: '#what-we-do' },
   },
   {
@@ -411,16 +414,6 @@ export const scrollSections = [
     action: { label: '프로젝트 보기', href: '#projects' },
   },
   {
-    id: 'team',
-    eyebrow: 'HOW WE WORK',
-    title: ['기술을 나누지 않고', '문제를 기준으로 연결합니다'],
-    body: '기계 설계, 전장, 로봇 소프트웨어, 인공지능 비전과 관제를 서로 분리된 기술로 보지 않습니다. 현장의 문제에서 출발해 하나의 자동화 시스템으로 완성합니다.',
-    align: 'left',
-    vh: 80,
-    camera: { position: [-6.2, 3.2, -6.8], target: [0, 1.2, 0], fov: 40 },
-    action: { label: '일하는 방식 보기', href: '#how-we-work' },
-  },
-  {
     id: 'join',
     eyebrow: 'JOIN US',
     title: ['이 문제를 함께 풀', '동료를 찾습니다'],
@@ -434,7 +427,7 @@ export const scrollSections = [
     // 파란 채움을 쓴다. 보조 CTA 는 테두리·글자색을 진행률에 따라 뒤집는다.
     actions: [
       { label: '채용 공고 보기', href: '#positions', variant: 'primary' },
-      { label: '회사 알아보기', href: '#about', variant: 'outlineDark', outroTinted: true },
+      { label: '회사 알아보기', href: '#what-we-do', variant: 'outlineDark', outroTinted: true },
     ],
   },
 ]

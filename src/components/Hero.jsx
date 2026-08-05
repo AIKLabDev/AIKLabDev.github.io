@@ -40,7 +40,7 @@ export default function Hero() {
             <Button href="#positions" variant="onDark" size="lg">
               채용 공고 보기
             </Button>
-            <Button href="#about" onClick={handleAnchorClick} variant="outlineDark" size="lg">
+            <Button href="#what-we-do" onClick={handleAnchorClick} variant="outlineDark" size="lg">
               회사 알아보기
             </Button>
           </div>

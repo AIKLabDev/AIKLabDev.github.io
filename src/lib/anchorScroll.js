@@ -17,6 +17,21 @@
  *
  * 링크가 여럿이라 각 요소에 붙이는 대신 위임으로 받는다.
  */
+let lastJumpAt = 0
+
+/**
+ * 방금 앵커 클릭으로 스크롤을 옮겼는지.
+ *
+ * useSectionSnap 의 관성 재포착 휴리스틱은 "히어로 안에서 입력 없이 스크롤이
+ * 크게 움직이면 관성"이라고 가정하는데, 이 앵커 점프도 정확히 그렇게 보인다
+ * (버튼은 클릭 시점에 이미 떼어졌고, scrollIntoView 는 wheel/touch/key 를
+ * 거치지 않는다). 그대로 두면 건너뛰기 도중 히어로 끝 경계로 되잡혀 온다 —
+ * 실제로 겪은 문제라 여기서 짧게 신호를 남겨 그 휴리스틱이 양보하게 한다.
+ */
+export function recentAnchorJump(withinMs = 1200) {
+  return performance.now() - lastJumpAt < withinMs
+}
+
 export function handleAnchorClick(event) {
   // 새 탭·다운로드 등 사용자가 다른 의도를 표시한 클릭은 건드리지 않는다
   if (event.defaultPrevented) return
@@ -37,5 +52,6 @@ export function handleAnchorClick(event) {
   if (!target) return
 
   event.preventDefault()
+  lastJumpAt = performance.now()
   target.scrollIntoView({ block: 'start' })
 }

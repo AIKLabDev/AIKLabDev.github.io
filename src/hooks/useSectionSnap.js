@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { sceneConfig } from '../data/scrollScene'
 import { tune } from '../lib/devTuning'
+import { recentAnchorJump } from '../lib/anchorScroll'
 import { isWheelContinuation } from '../lib/gesture'
 import { clamp } from '../lib/math'
 
@@ -274,6 +275,10 @@ export function useSectionSnap({ enabled, outerRef, stickyRef, sections }) {
       lastY = y
 
       if (animating.current) return
+      // 건너뛰기·섹션 액션 링크의 scrollIntoView 도 "입력 없이 크게 움직임"으로
+      // 보인다 — 관성으로 오판해 되잡으면 히어로 밖으로 못 나간다. 앵커 점프
+      // 직후에는 이 재포착을 양보한다.
+      if (recentAnchorJump()) return
 
       // 아래 콘텐츠에서 관성으로 되돌아왔다
       if (prev === 'below' && region === 'inside') {
