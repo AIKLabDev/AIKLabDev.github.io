@@ -1,11 +1,7 @@
 import { benefits, benefitsNote, coreValues, workExperiences } from '../data/culture'
 import Icon from './Icon'
-import { Section, SectionHead } from './ui'
+import { Section, SectionHead, SnapRail } from './ui'
 
-/**
- * 세 블록(인재상 / 직무 경험 / 복리후생)은 모두 같은 골격을 쓴다.
- * 왼쪽 좁은 칼럼에 제목, 세로 구분선 오른쪽 넓은 칼럼에 내용.
- */
 function Block({ title, children }) {
   return (
     <div className="rounded-2xl border border-ink-900/6 bg-white p-5 shadow-card sm:p-6 lg:px-7 lg:py-7">
@@ -14,7 +10,9 @@ function Block({ title, children }) {
           <h3 className="text-lg font-bold tracking-tight text-ink-900 sm:text-xl">{title}</h3>
         </div>
 
-        <div className="lg:col-span-10 lg:border-l lg:border-ink-900/8 lg:pl-7">{children}</div>
+        <div className="min-w-0 lg:col-span-10 lg:border-l lg:border-ink-900/8 lg:pl-7">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -45,51 +43,68 @@ export default function Culture() {
       <div className="mt-7 space-y-4 lg:mt-8">
         {/* 인재상 */}
         <Block title="인재상">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <SnapRail
+            gridClass="lg:grid-cols-3"
+            gapClass="md:gap-3"
+            itemWidth="w-[70vw]"
+            label="인재상 세 가지"
+          >
             {coreValues.map((value, index) => {
               const tone = valueTones[index % valueTones.length]
               return (
                 <article
                   key={value.key}
-                  className={`rounded-xl px-4 pt-3.5 pb-4 text-center ${tone.card}`}
+                  className={`flex h-full flex-wrap items-start gap-x-3.5 rounded-xl p-4 lg:block lg:px-4 lg:pt-3.5 lg:pb-4 lg:text-center ${tone.card}`}
                 >
-                  <span className={`block text-left font-mono text-[0.6875rem] font-bold ${tone.num}`}>
+                  <span
+                    className={`w-full text-left font-mono text-[0.6875rem] font-bold lg:block lg:w-auto ${tone.num}`}
+                  >
                     {step(index)}
                   </span>
 
                   <span
-                    className={`mx-auto mt-1 grid size-11 place-items-center rounded-full ${tone.badge}`}
+                    className={`mt-2 grid size-11 shrink-0 place-items-center rounded-full lg:mx-auto lg:mt-1 ${tone.badge}`}
                   >
                     <Icon name={value.icon} className="size-5.5" strokeWidth={1.5} />
                   </span>
 
-                  <h4 className="mt-2.5 text-base font-bold tracking-tight text-ink-900">
-                    {value.key}
-                  </h4>
-                  <p className="mt-1 text-[0.8125rem] font-semibold text-ink-900/75">
-                    {value.title}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-ink-900/55">{value.body}</p>
+                  <div className="mt-2 min-w-0 flex-1 lg:contents">
+                    <h4 className="text-base font-bold tracking-tight text-ink-900 lg:mt-2.5">
+                      {value.key}
+                    </h4>
+                    <p className="mt-0.5 text-[0.8125rem] font-semibold text-ink-900/75 lg:mt-1">
+                      {value.title}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-ink-900/55 lg:mt-1.5">
+                      {value.body}
+                    </p>
+                  </div>
                 </article>
               )
             })}
-          </div>
+          </SnapRail>
         </Block>
 
         {/* 직무 경험 — 번호 + 그라데이션 밑줄 */}
         <Block title="직무 경험">
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
             {workExperiences.map((experience, index) => (
-              <div key={experience.title}>
+              <div key={experience.title} className="flex gap-3 lg:block">
                 <span className="font-mono text-xl font-bold tracking-tight text-brand-600">
                   {step(index)}
                 </span>
                 <span
-                  className="mt-2.5 block h-0.5 rounded-full bg-gradient-to-r from-brand-500 via-brand-400/50 to-brand-300/25"
+                  className="mt-2.5 hidden h-0.5 rounded-full bg-gradient-to-r from-brand-500 via-brand-400/50 to-brand-300/25 lg:block"
                   aria-hidden="true"
                 />
-                <h4 className="mt-4 text-[0.9375rem] font-bold text-ink-900">{experience.title}</h4>
-                <p className="mt-2.5 text-xs leading-relaxed text-ink-900/55">{experience.body}</p>
+                <div className="min-w-0 flex-1 lg:contents">
+                  <h4 className="text-[0.9375rem] font-bold text-ink-900 lg:mt-4">
+                    {experience.title}
+                  </h4>
+                  <p className="mt-1.5 text-xs leading-relaxed text-ink-900/55 lg:mt-2.5">
+                    {experience.body}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

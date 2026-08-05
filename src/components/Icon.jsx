@@ -227,6 +227,7 @@ const paths = {
   ),
   arrowRight: <path d="M4.5 12h15M13.5 6l6 6-6 6" />,
   arrowUpRight: <path d="M7 17 17 7M8.5 7H17v8.5" />,
+  chevronDown: <path d="m6 9.5 6 6 6-6" />,
   play: <path d="M8 5.5v13l11-6.5z" strokeLinejoin="round" />,
   check: <path d="M4.5 12.8 9 17.2 19.5 6.8" />,
   mail: (

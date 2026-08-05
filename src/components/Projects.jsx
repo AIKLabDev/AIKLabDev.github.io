@@ -1,21 +1,20 @@
 import { projects } from '../data/projects'
 import { MediaRaw } from './Media'
-import { ArrowLink, Section, SectionHead, Tag } from './ui'
+import { ArrowLink, Section, SectionHead, SnapRail, Tag } from './ui'
 
 /**
  * 캡션은 화면에 띄우지 않고 MediaRaw 안에서 alt/aria 텍스트로만 쓴다.
  */
 function ProjectCard({ project }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-lg">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-lg">
       <div className="aspect-video overflow-hidden bg-ink-900">
         <MediaRaw item={project.media} />
       </div>
 
       <div className="flex flex-1 flex-col p-5">
         <h3 className="text-[0.9375rem] leading-snug font-bold text-ink-900">{project.title}</h3>
-        {/* body 안의 \n 을 줄바꿈으로 렌더링한다 */}
-        <p className="mt-2.5 whitespace-pre-line text-justify text-[0.8125rem] leading-relaxed text-ink-900/70">
+        <p className="mt-2.5 whitespace-pre-line text-[0.8125rem] leading-relaxed text-ink-900/70 md:text-justify">
           {project.body}
         </p>
 
@@ -38,12 +37,15 @@ export default function Projects() {
         description="로봇 기술의 가능성을 넓혀 온 AIKOREA의 주요 프로젝트를 만나보세요."
         action={<ArrowLink href="#positions">관련 포지션 보기</ArrowLink>}
       />
-
-      <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3">
+      <SnapRail
+        className="mt-12 lg:mt-14"
+        gridClass="md:grid-cols-2 lg:grid-cols-3"
+        label="주요 프로젝트 목록"
+      >
         {projects.map((p) => (
           <ProjectCard key={p.id} project={p} />
         ))}
-      </div>
+      </SnapRail>
     </Section>
   )
 }

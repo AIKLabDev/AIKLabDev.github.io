@@ -1,4 +1,62 @@
+import { Children, useRef, useState } from 'react'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import Icon from './Icon'
+
+export function SnapRail({
+  gridClass,
+  gapClass = 'md:gap-5',
+  itemWidth = 'w-[80vw]',
+  label,
+  dark = false,
+  className = '',
+  children,
+}) {
+  const items = Children.toArray(children)
+  const railRef = useRef(null)
+  const [active, setActive] = useState(0)
+  const isRail = useMediaQuery('(max-width: 767px)')
+
+  const onScroll = () => {
+    const el = railRef.current
+    if (!el || el.children.length < 2) return
+    const step = el.children[1].offsetLeft - el.children[0].offsetLeft
+    if (step <= 0) return
+    const i = Math.round(el.scrollLeft / step)
+    setActive(Math.max(0, Math.min(items.length - 1, i)))
+  }
+
+  return (
+    <div className={className}>
+      <div
+        ref={railRef}
+        onScroll={isRail ? onScroll : undefined}
+        className={`no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-5 px-5 pb-1 md:mx-0 md:grid md:overflow-visible md:px-0 md:pb-0 ${gapClass} ${gridClass}`}
+        {...(isRail ? { role: 'group', 'aria-label': label, tabIndex: 0 } : {})}
+      >
+        {items.map((child, i) => (
+          <div key={i} className={`${itemWidth} shrink-0 snap-start md:w-auto md:shrink`}>
+            {child}
+          </div>
+        ))}
+      </div>
+
+      {isRail && (
+        <div className="mt-4 flex justify-center gap-1.5" aria-hidden="true">
+          {items.map((_, i) => (
+            <span
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                i === active
+                  ? `w-5 ${dark ? 'bg-accent-400' : 'bg-brand-600'}`
+                  : `w-1.5 ${dark ? 'bg-white/25' : 'bg-ink-900/20'}`
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** 섹션 래퍼 — 밝은/어두운 두 가지 톤 */
 export function Section({ id, tone = 'light', className = '', children }) {

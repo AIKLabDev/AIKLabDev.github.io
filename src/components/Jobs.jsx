@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { hiringProcess, jobs } from '../data/jobs'
 import Icon from './Icon'
-import { ArrowLink, Badge, Meta, Section, SectionHead, Tag } from './ui'
+import { ArrowLink, Badge, Meta, Section, SectionHead, SnapRail, Tag } from './ui'
 
 const STACK_LIMIT = 3
 
@@ -10,7 +10,7 @@ function JobCard({ job }) {
   const rest = job.stack.length - stack.length
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/25 hover:shadow-card-lg">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/25 hover:shadow-card-lg">
       {/* hover 시 상단에서 펼쳐지는 강조선 */}
       <span
         className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-gradient-to-r from-brand-600 to-accent-400 transition-transform duration-300 group-hover:scale-x-100"
@@ -75,33 +75,51 @@ export default function Jobs() {
         }
       />
 
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
+      <SnapRail
+        className="mt-10 lg:mt-12"
+        gridClass="md:grid-cols-2 lg:grid-cols-3"
+        label="채용 중인 포지션 목록"
+      >
         {jobs.map((job) => (
           <JobCard key={job.id} job={job} />
         ))}
-      </div>
+      </SnapRail>
 
       {/* 채용 절차 */}
       <div className="mt-12 rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card sm:p-8">
         <h3 className="text-base font-bold text-ink-900">채용 절차</h3>
-        <ol className="mt-7 grid gap-x-6 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
-          {hiringProcess.map((s, i) => (
-            <li key={s.step}>
-              <div className="flex items-center gap-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-600 font-mono text-[0.6875rem] font-bold text-white ring-4 ring-brand-50">
-                  {i + 1}
-                </span>
-                {i < hiringProcess.length - 1 && (
-                  <span
-                    className="hidden h-px flex-1 bg-gradient-to-r from-brand-200 to-brand-100 lg:block"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-              <h4 className="mt-4 text-sm font-bold text-ink-900">{s.step}</h4>
-              <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-900/60">{s.body}</p>
-            </li>
-          ))}
+        <ol className="mt-7 grid gap-x-6 gap-y-0 md:grid-cols-2 md:gap-y-7 lg:grid-cols-4">
+          {hiringProcess.map((s, i) => {
+            const isLast = i === hiringProcess.length - 1
+            return (
+              <li key={s.step} className="flex gap-3.5 md:block">
+                <div className="flex flex-col items-center md:flex-row md:gap-3">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand-600 font-mono text-[0.6875rem] font-bold text-white ring-4 ring-brand-50">
+                    {i + 1}
+                  </span>
+                  {!isLast && (
+                    <>
+                      <span
+                        className="mt-1.5 w-px flex-1 bg-gradient-to-b from-brand-200 to-brand-100 md:hidden"
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="hidden h-px flex-1 bg-gradient-to-r from-brand-200 to-brand-100 lg:block"
+                        aria-hidden="true"
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div className={isLast ? '' : 'pb-6 md:pb-0'}>
+                  <h4 className="mt-1 text-sm font-bold text-ink-900 md:mt-4">{s.step}</h4>
+                  <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-900/60 md:mt-2">
+                    {s.body}
+                  </p>
+                </div>
+              </li>
+            )
+          })}
         </ol>
       </div>
     </Section>

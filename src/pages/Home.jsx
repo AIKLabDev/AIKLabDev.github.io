@@ -1,4 +1,3 @@
-import About from '../components/About'
 import Contact from '../components/Contact'
 import Culture from '../components/Culture'
 import Jobs from '../components/Jobs'

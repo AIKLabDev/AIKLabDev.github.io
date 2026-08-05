@@ -17,44 +17,50 @@ export default function Pipeline() {
         description="AIKOREA는 현장의 요구를 바탕으로 아이디어를 구체화하고, 반복적인 검증과 개선을 통해 제품의 완성도를 높입니다."
       />
 
-      <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:mt-14 lg:grid-cols-5">
-        {pipeline.map((p, i) => (
-          <li
-            key={p.step}
-            className={`relative flex flex-col rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm sm:p-6 ${
-              /* 홀수 개를 2열로 놓으면 마지막 한 장이 홀로 남는다 — 태블릿에서는 폭을 채운다. */
-              pipeline.length % 2 === 1 && i === pipeline.length - 1
-                ? 'sm:col-span-2 lg:col-span-1'
-                : ''
-            }`}
-          >
-            {/* 단계 연결선 (데스크톱) — 카드 안 가로선과 같은 높이에서 이어진다. */}
-            {i < pipeline.length - 1 && (
-              <span
-                className="absolute top-[2.125rem] -right-4 hidden h-px w-4 bg-gradient-to-r from-accent-500/60 to-transparent lg:block"
-                aria-hidden="true"
-              />
-            )}
+      <ol className="mt-10 grid gap-0 md:gap-4 md:grid-cols-2 lg:mt-14 xl:grid-cols-5">
+        {pipeline.map((p, i) => {
+          const isLast = i === pipeline.length - 1
+          return (
+            <li
+              key={p.step}
+              className={`relative flex gap-4 md:flex-col md:gap-0 md:rounded-2xl md:border md:border-white/10 md:bg-white/[0.04] md:p-6 md:backdrop-blur-sm ${
+                isLast ? 'md:col-span-2 xl:col-span-1' : ''
+              }`}
+            >
+              <div className="flex flex-col items-center md:hidden" aria-hidden="true">
+                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-accent-400/35 bg-accent-400/10 font-mono text-[0.6875rem] font-bold text-accent-400">
+                  {p.step}
+                </span>
+                {!isLast && (
+                  <span className="mt-1.5 w-px flex-1 bg-gradient-to-b from-white/18 to-white/5" />
+                )}
+              </div>
 
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-sm font-bold text-accent-400">{p.step}</span>
-              <span className="h-px flex-1 bg-white/12" aria-hidden="true" />
-            </div>
+              <div className="hidden items-center gap-3 md:flex">
+                <span className="font-mono text-sm font-bold text-accent-400">{p.step}</span>
+                <span className="h-px flex-1 bg-white/12" aria-hidden="true" />
+              </div>
 
-            {/*
-              5열에서는 제목이 1줄과 2줄로 갈려 본문 시작 높이가 어긋난다.
-              두 줄 높이를 미리 잡아 카드끼리 본문 첫 줄을 맞춘다.
-            */}
-            <h3 className="mt-4 text-[0.9375rem] leading-snug font-bold text-balance text-white lg:min-h-[2.6rem]">
-              {p.title}
-            </h3>
-            <div className="mt-2.5 flex-1 space-y-2 text-[0.8125rem] leading-relaxed text-pretty text-brand-100/65">
-              {p.body.map((para) => (
-                <p key={para}>{para}</p>
-              ))}
-            </div>
-          </li>
-        ))}
+              <div className={`flex flex-col md:flex-1 ${isLast ? '' : 'pb-7 md:pb-0'}`}>
+                <h3 className="mt-1.5 text-[0.9375rem] leading-snug font-bold text-balance text-white md:mt-4 xl:min-h-[2.6rem]">
+                  {p.title}
+                </h3>
+                <div className="mt-2 space-y-2 text-[0.8125rem] leading-relaxed text-pretty text-brand-100/65 md:mt-2.5 md:flex-1">
+                  {p.body.map((para) => (
+                    <p key={para}>{para}</p>
+                  ))}
+                </div>
+              </div>
+
+              {!isLast && (
+                <span
+                  className="absolute top-[2.375rem] -right-4 hidden h-px w-4 bg-gradient-to-r from-accent-500/60 to-transparent xl:block"
+                  aria-hidden="true"
+                />
+              )}
+            </li>
+          )
+        })}
       </ol>
     </Section>
   )
