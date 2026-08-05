@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import Footer from './components/Footer'
+import HashScroll from './components/HashScroll'
 import Header from './components/Header'
 import Home from './pages/Home'
 import JobDetail from './pages/JobDetail'
@@ -14,6 +15,7 @@ export default function App() {
       >
         본문으로 건너뛰기
       </a>
+      <HashScroll />
       <Header />
       <main id="main">
         <Routes>
