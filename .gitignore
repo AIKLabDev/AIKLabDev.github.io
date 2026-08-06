@@ -12,10 +12,6 @@ dist
 dist-ssr
 *.local
 
-# 사이트 미디어(사진·영상)는 레포에 넣지 않는다 — 별도로 전달해 배포한다.
-# 파일이 없으면 히어로 배경과 프로젝트 섹션이 빈 채로 뜬다. README 참고.
-public/media/
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
