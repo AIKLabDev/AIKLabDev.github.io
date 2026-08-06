@@ -3,13 +3,11 @@ import { Link } from 'react-router'
 import Icon from '../components/Icon'
 import { jobs } from '../data/jobs'
 
-/** 데이터에 등장하는 순서대로 팀별로 묶는다. */
 const groups = [...new Set(jobs.map((j) => j.team))].map((team) => ({
   team,
   items: jobs.filter((j) => j.team === team),
 }))
 
-/** 제목의 ::after 로 행 전체를 덮어(stretched link) 어디를 눌러도 상세로 간다. */
 function JobRow({ job }) {
   return (
     <li className="group relative border-b border-ink-900/8">

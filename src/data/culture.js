@@ -1,4 +1,3 @@
-// 인재상
 export const coreValues = [
   {
     key: 'Creative',
@@ -20,8 +19,6 @@ export const coreValues = [
   },
 ]
 
-
-// 직무 경험
 export const workExperiences = [
   {
     title: '아이디어를 제품으로 구현합니다',
@@ -37,11 +34,9 @@ export const workExperiences = [
   },
 ]
 
-// 복리후생
 export const benefitsNote =
   '복리후생의 세부 대상과 지원 기준은 회사 규정에 따라 적용되며, 입사 과정에서 자세히 안내합니다.'
 
-// 아이콘 + 항목명만 노출한다. 세부 기준은 benefitsNote 한 줄로 갈음.
 export const benefits = [
   { icon: 'utensils', title: '식대 지원' },
   { icon: 'medkit', title: '건강검진 지원' },

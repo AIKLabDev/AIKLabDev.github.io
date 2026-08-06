@@ -58,7 +58,6 @@ export function SnapRail({
   )
 }
 
-/** 섹션 래퍼 — 밝은/어두운 두 가지 톤 */
 export function Section({ id, tone = 'light', className = '', children }) {
   const tones = {
     light: 'bg-page',
@@ -72,13 +71,11 @@ export function Section({ id, tone = 'light', className = '', children }) {
   )
 }
 
-/** 제목만 있는 섹션에서는 md로 한 단계 낮춰 쓴다. */
 const headSizes = {
   lg: 'mt-3 text-2xl sm:text-3xl lg:text-[2.125rem]',
   md: 'mt-2.5 text-xl sm:text-2xl lg:text-[1.625rem]',
 }
 
-/** 섹션 머리말 — eyebrow / 제목 / 설명 + 우측 액션 */
 export function SectionHead({
   eyebrow,
   title,
@@ -136,7 +133,6 @@ export function Button({ as = 'a', variant = 'primary', size = 'md', className =
   )
 }
 
-/** 텍스트 + 화살표 링크 (섹션 우측 상단 "더 보기" 류) */
 export function ArrowLink({ as = 'a', children, dark = false, className = '', ...rest }) {
   const Tag = as
   return (
@@ -156,7 +152,6 @@ export function ArrowLink({ as = 'a', children, dark = false, className = '', ..
   )
 }
 
-/** 기술 태그 칩 */
 export function Tag({ children, dark = false }) {
   return (
     <span
@@ -169,7 +164,6 @@ export function Tag({ children, dark = false }) {
   )
 }
 
-/** 분류 배지 (고용 형태 / 주력 표시 등) */
 export function Badge({ children, variant = 'brand' }) {
   const variants = {
     brand: 'bg-brand-50 text-brand-700 ring-brand-500/20',
@@ -185,7 +179,6 @@ export function Badge({ children, variant = 'brand' }) {
   )
 }
 
-/** 메타 정보 한 줄 (아이콘 + 텍스트) */
 export function Meta({ icon, children, dark = false }) {
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs ${dark ? 'text-brand-100/70' : 'text-ink-900/55'}`}>

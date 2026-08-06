@@ -45,14 +45,6 @@ function AreaCard({ area }) {
   )
 }
 
-/**
- * 좁은 화면용 한 줄 항목.
- * 네 영역 각각이 요약 한 문단 + 여섯 줄짜리 목록을 달고 있어, 카드로 쌓으면
- * 이 섹션만 화면 두 장 반을 먹는다. 지원자가 이 섹션에서 먼저 찾는 것은
- * "내 분야가 여기 있나" 이므로 제목 넷을 한눈에 남기고 세부는 접는다.
- * 상태를 직접 들 필요가 없어 네이티브 <details> 를 쓴다 — 키보드·스크린리더
- * 동작이 기본으로 딸려온다.
- */
 function AreaAccordion({ area, defaultOpen }) {
   return (
     <details open={defaultOpen} className="group">

@@ -6,11 +6,6 @@ export const site = {
   phone: '031-000-0000',
 }
 
-/**
- * 헤더·바닥글 공용 내비게이션.
- * 공고 상세(/jobs/:id)에서도 눌러야 하므로 루트 기준 해시(`/#id`)로 둔다.
- * 홈에서는 같은 경로이므로 리로드 없이 스크롤만 이동한다.
- */
 export const nav = [
   { label: 'Tech', href: '/#what-we-do' },
   { label: 'Projects', href: '/#projects' },

@@ -4,7 +4,6 @@ import { handleAnchorClick } from '../lib/anchorScroll'
 export default function Hero() {
   return (
     <section className="relative isolate overflow-hidden bg-ink-900">
-      {/* 배경: 창고에서 자율주행 중인 실물 지게차 */}
       <img
         src="/media/hero-forklift.jpg"
         alt="창고 랙 사이를 자율주행 중인 AMR 지게차"
@@ -24,7 +23,6 @@ export default function Hero() {
           산업의 움직임에 <br></br> <span className="text-accent-400">로봇의 가능성</span>을 더합니다.
           </h1>
            
-
 
           <div className="mt-6 max-w-xl space-y-3 text-[0.9375rem] leading-relaxed text-brand-100/80 sm:text-base">
             <p>

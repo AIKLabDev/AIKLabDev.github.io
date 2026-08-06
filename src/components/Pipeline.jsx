@@ -4,7 +4,6 @@ import { Section, SectionHead } from './ui'
 export default function Pipeline() {
   return (
     <Section id="how-we-work" tone="dark" className="relative isolate overflow-hidden">
-      {/* 은은한 배경 글로우 */}
       <div
         className="absolute -top-40 left-1/2 -z-10 size-[42rem] -translate-x-1/2 rounded-full bg-brand-600/20 blur-3xl"
         aria-hidden="true"

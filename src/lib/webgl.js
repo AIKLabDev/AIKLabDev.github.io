@@ -1,7 +1,4 @@
-/**
- * WebGL 지원 감지. 컨텍스트 생성은 비싸므로 결과를 한 번만 캐시한다.
- * (SSR 이 없는 프로젝트지만 window 가드는 남겨 둔다)
- */
+// 컨텍스트 생성이 비싸므로 결과를 한 번만 캐시한다
 let cached = null
 
 export function isWebGLAvailable() {

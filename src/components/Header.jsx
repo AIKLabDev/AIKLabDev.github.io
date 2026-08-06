@@ -10,21 +10,12 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  /**
-   * 3D 히어로 위에서는 로고만 남기고 나머지 크롬을 걷는다.
-   * 마지막 전환에서 배경이 흰색이 되는 것과 같은 타이밍에 되돌아오므로,
-   * "3D 를 보다가 웹페이지로 넘어왔다" 로 읽힌다. (값은 히어로가 흘려준다)
-   *
-   * 리렌더 대신 DOM 을 직접 만진다 — 스크롤마다 헤더 전체가 다시 그려질 이유가 없다.
-   */
   const headerRef = useRef(null)
   const chromeRef = useRef(null) // 메뉴 + CTA + 햄버거
   const logoLightRef = useRef(null) // 어두운 배경용 흰 로고 레이어
   const dividerRef = useRef(null)
-  /** 첫 페인트부터 맞는 상태로 그린다. effect 로 감추면 새로고침마다 메뉴가 번쩍인다. */
   const [initialReveal] = useState(getHeroReveal)
   const revealRef = useRef(initialReveal)
-  /** 키보드 포커스가 헤더 안에 있으면 무조건 드러낸다 — 안 보이는 곳으로 포커스가 가면 안 된다 */
   const focusedRef = useRef(false)
 
   useEffect(() => {
@@ -82,7 +73,6 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // 모바일 메뉴가 열려 있을 때 배경 스크롤 잠금
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => {
@@ -100,8 +90,6 @@ export default function Header() {
     >
       <div className="container-page flex h-16 items-center justify-between gap-6 lg:h-20">
         <Link to="/" className="flex shrink-0 items-center gap-2.5" onClick={() => setMenuOpen(false)}>
-          {/* 로고가 짙은 남색이라 어두운 3D 위에서는 읽히지 않는다.
-              흰색으로 뒤집은 사본을 겹쳐 크로스페이드한다 — 별도 에셋이 필요 없다. */}
           <span className="relative block">
             <img src="/brand/aikorea-logo.png" alt={`${site.name} 로고`} className="h-7 w-auto lg:h-8" />
             <img
@@ -122,7 +110,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* 내비게이션은 CTA 바로 옆에 붙여 오른쪽 한 덩어리로 읽히게 둔다. */}
         <div
           ref={chromeRef}
           style={{ opacity: initialReveal, pointerEvents: initialReveal > 0.6 ? undefined : 'none' }}

@@ -9,7 +9,6 @@ export default function Footer() {
       <div className="container-page py-12 sm:py-14">
         <div className="flex flex-col gap-10 lg:flex-row lg:justify-between">
           <div>
-            {/* 어두운 배경에서 로고 남색이 묻히지 않도록 밝게 보정 */}
             <img
               src="/brand/aikorea-logo.png"
               alt={`${site.name} 로고`}

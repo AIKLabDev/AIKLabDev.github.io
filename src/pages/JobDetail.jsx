@@ -47,7 +47,6 @@ export default function JobDetail() {
 
   return (
     <>
-      {/* 공고 헤더 */}
       <div className="border-b border-ink-900/8 bg-white">
         <div className="container-page py-10 sm:py-14">
           <nav className="flex items-center gap-2 text-sm font-medium text-ink-900/55" aria-label="현재 위치">
@@ -89,7 +88,6 @@ export default function JobDetail() {
         </div>
       </div>
 
-      {/* 본문 */}
       <div className="container-page py-12 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
           <div className="space-y-10">
@@ -115,7 +113,6 @@ export default function JobDetail() {
             </div>
           </div>
 
-          {/* 지원 사이드바 */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card">
               <h2 className="text-sm font-bold text-ink-900">지원하기</h2>
@@ -160,7 +157,6 @@ export default function JobDetail() {
           </aside>
         </div>
 
-        {/* 관련 기술 */}
         <div className="mt-14 border-t border-ink-900/8 pt-8">
           <h2 className="text-sm font-bold text-ink-900">이 포지션에서 사용하는 기술</h2>
           <div className="mt-4 flex flex-wrap gap-1.5">

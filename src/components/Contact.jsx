@@ -2,7 +2,6 @@ import { site } from '../data/site'
 import Icon from './Icon'
 import { Button } from './ui'
 
-/** 하단 지원 유도(CTA) 밴드 */
 export default function Contact() {
   return (
     <section id="contact" className="relative isolate overflow-hidden bg-ink-950">
@@ -10,9 +9,6 @@ export default function Contact() {
         className="absolute top-1/2 left-1/2 -z-10 size-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/25 blur-3xl"
         aria-hidden="true"
       />
-
-
-
 
       <div className="container-page py-16 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">

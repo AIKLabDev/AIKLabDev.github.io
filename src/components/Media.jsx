@@ -14,7 +14,6 @@ function usePrefersReducedMotion() {
   return reduced
 }
 
-/** 무음 자동 반복 루프. 모션 감소 설정이면 포스터 이미지만 보여준다. */
 function LoopVideo({ src, poster, caption }) {
   const reduced = usePrefersReducedMotion()
 
@@ -36,7 +35,6 @@ function LoopVideo({ src, poster, caption }) {
   )
 }
 
-/** 포스터 + 재생 버튼. 클릭할 때까지 영상을 내려받지 않는다. */
 function ClipVideo({ src, poster, caption }) {
   const [playing, setPlaying] = useState(false)
 
@@ -76,10 +74,6 @@ function ClipVideo({ src, poster, caption }) {
   )
 }
 
-/**
- * 사진/영상 자료가 없는 프로젝트용 구조 다이어그램.
- * (팔레타이징 Sim-to-Real 브리지 구조)
- */
 function PalletizingDiagram() {
   const nodes = [
     { x: 24, label: 'MoveIt', sub: '모션 계획' },
@@ -106,7 +100,6 @@ function PalletizingDiagram() {
           </g>
         ))}
 
-        {/* 브리지에서 가상/실물로 갈라지는 두 경로 */}
         <path d="M268 92 Q296 92 296 56 L318 56" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
         <path d="M268 108 Q296 108 296 144 L318 144" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
         <path d="M136 100 L150 100" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
@@ -122,7 +115,6 @@ function PalletizingDiagram() {
           <text x="364" y="154" textAnchor="middle" className="fill-white/55 text-[8px]">6축 매니퓰레이터</text>
         </g>
 
-        {/* JointState 양방향 동기화 */}
         <path d="M364 80 L364 120" fill="none" stroke="#94a3b8" strokeOpacity="0.45" strokeWidth="1.1" strokeDasharray="3 3" />
         <text x="372" y="103" className="fill-slate-300/70 text-[7.5px]">JointState 동기화</text>
       </svg>
@@ -130,10 +122,6 @@ function PalletizingDiagram() {
   )
 }
 
-/**
- * 부모를 그대로 채우는 렌더러. 바깥에서 비율·모서리를 잡아주는 것을 전제한다.
- * caption 은 화면에 띄우지 않고 alt / aria 텍스트로만 쓴다.
- */
 export function MediaRaw({ item }) {
   const { kind, src, poster, caption } = item
   if (kind === 'loop') return <LoopVideo src={src} poster={poster} caption={caption} />

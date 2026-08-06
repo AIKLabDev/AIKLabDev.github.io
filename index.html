@@ -12,19 +12,6 @@
     />
     <meta name="theme-color" content="#0a1628" />
 
-    <!--
-      흰 번쩍임 방지.
-
-      우리 요소가 아직 없거나(로드 전) 이미 사라진(페이지를 떠나는 중) 프레임에서는
-      브라우저의 기본 캔버스 색이 드러난다. 그 기본색이 밝아서 새로고침마다 흰
-      화면이 번쩍였다. color-scheme 이 그 기본색을 정한다.
-
-      html 배경도 함께 준다. 둘은 역할이 다르다 — color-scheme 은 문서가 없는
-      순간의 기본색이고, html 배경은 문서가 있는 동안의 캔버스색이다.
-      body 는 계속 밝은 bg-page 이고 자기 박스를 칠하므로 화면은 그대로다.
-
-      개발 서버는 CSS 를 JS 로 주입해 늦게 적용되므로 여기 인라인으로도 둔다.
-    -->
     <meta name="color-scheme" content="dark" />
     <style>
       html {
@@ -33,22 +20,14 @@
     </style>
 
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aiklabdev.github.io/" />
     <meta property="og:title" content="AIKOREA 채용 | AMR 지게차 · 팔레타이징 로봇 개발" />
     <meta
       property="og:description"
       content="시뮬레이션에서 검증하고, 현장에서 움직입니다. AIKOREA와 함께할 로보틱스 엔지니어를 찾습니다."
     />
-    <meta property="og:image" content="/media/hero-forklift.jpg" />
+    <meta property="og:image" content="https://aiklabdev.github.io/media/hero-forklift.jpg" />
 
-    <!--
-      본문 폰트. rel="stylesheet" 로 두면 렌더 차단이라, 이 CDN 응답이 올 때까지
-      브라우저가 첫 페인트를 아예 하지 않는다 — 바로 위에서 배경을 어둡게 잡아놔도
-      그동안은 그려지지 않아 화면이 백지로 남는다. 새로고침 때 0.3초 가까이 흰
-      화면이 뜨던 것이 이것이었다(3D 없는 /jobs 페이지에서도 똑같이 났다).
-
-      preload 로 받아 로드 후 stylesheet 로 승격시키면 차단이 풀린다. 대신 폰트가
-      늦게 붙어 글자가 한 번 바뀌어 보이는데(FOUT), 0.3초 백지보다 낫다고 봤다.
-    -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       rel="preload"

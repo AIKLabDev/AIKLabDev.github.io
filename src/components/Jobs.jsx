@@ -11,7 +11,6 @@ function JobCard({ job }) {
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-brand-500/25 hover:shadow-card-lg">
-      {/* hover 시 상단에서 펼쳐지는 강조선 */}
       <span
         className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-gradient-to-r from-brand-600 to-accent-400 transition-transform duration-300 group-hover:scale-x-100"
         aria-hidden="true"
@@ -39,7 +38,6 @@ function JobCard({ job }) {
         </div>
       </div>
 
-      {/* 스택은 지원자가 가장 먼저 확인하는 정보라 카드에 남긴다 */}
       <div className="flex items-center gap-3 border-t border-ink-900/8 bg-page/70 px-5 py-3.5">
         <div className="flex flex-1 flex-wrap gap-1.5">
           {stack.map((t) => (
@@ -85,7 +83,6 @@ export default function Jobs() {
         ))}
       </SnapRail>
 
-      {/* 채용 절차 */}
       <div className="mt-12 rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card sm:p-8">
         <h3 className="text-base font-bold text-ink-900">채용 절차</h3>
         <ol className="mt-7 grid gap-x-6 gap-y-0 md:grid-cols-2 md:gap-y-7 lg:grid-cols-4">

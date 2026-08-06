@@ -2,9 +2,6 @@ import { projects } from '../data/projects'
 import { MediaRaw } from './Media'
 import { ArrowLink, Section, SectionHead, SnapRail, Tag } from './ui'
 
-/**
- * 캡션은 화면에 띄우지 않고 MediaRaw 안에서 alt/aria 텍스트로만 쓴다.
- */
 function ProjectCard({ project }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-900/8 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-lg">

@@ -18,11 +18,6 @@ function Block({ title, children }) {
   )
 }
 
-/**
- * 인재상 카드 색 — 하늘 / 주황 / 파랑.
- * 가운데 난색을 끼워 양옆 두 파랑이 서로 붙어 보이지 않게 한다.
- * 세 장의 틴트 농도는 맞춰 뒀다 — 한 장만 옅으면 비어 보인다.
- */
 const valueTones = [
   { card: 'bg-[#e2f4fd]', badge: 'bg-[#c6e8f8] text-[#0e7fb4]', num: 'text-[#3aa8db]' },
   { card: 'bg-[#faf1ea]', badge: 'bg-[#f6e1d1] text-[#ca5823]', num: 'text-[#d98a64]' },
@@ -41,7 +36,6 @@ export default function Culture() {
       />
 
       <div className="mt-7 space-y-4 lg:mt-8">
-        {/* 인재상 */}
         <Block title="인재상">
           <SnapRail
             gridClass="lg:grid-cols-3"
@@ -85,7 +79,6 @@ export default function Culture() {
           </SnapRail>
         </Block>
 
-        {/* 직무 경험 — 번호 + 그라데이션 밑줄 */}
         <Block title="직무 경험">
           <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
             {workExperiences.map((experience, index) => (
@@ -110,9 +103,7 @@ export default function Culture() {
           </div>
         </Block>
 
-        {/* 복리후생 — 세로 구분선으로 나눈 아이콘 열 */}
         <Block title="복리후생">
-          {/* 3 → 6열. 줄 맨 앞 항목만 세로 구분선을 뺀다. */}
           <div className="grid grid-cols-3 gap-y-6 lg:grid-cols-6">
             {benefits.map((benefit, index) => (
               <div
