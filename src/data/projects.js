@@ -51,7 +51,12 @@ export const projects = [
     title: 'AMR 통합 관제 시스템',
     body: '여러 대의 AMR을 한 화면에서 확인하고 제어할 수 있는 관제 시스템을 개발합니다. 로봇의 위치와 상태, 카메라 영상을 실시간으로 전달해 안정적인 현장 운영을 지원합니다.',
     tags: ['FastAPI', 'React', 'WebSocket', 'WebRTC', 'MediaMTX'],
-    media: { kind: 'image', src: '/media/fleet-surround.jpg', caption: 'AMR 서라운드 뷰 관제 화면' },
+    media: {
+      kind: 'loop',
+      src: '/media/fleet-console.webm',
+      poster: '/media/fleet-console.jpg',
+      caption: '관제 화면에서 작업을 지정하고 AMR에 실행 지시 — 2D 지도에 경로와 상태가 실시간 반영',
+    },
   },
   {
     id: 'mecanum-amr',
