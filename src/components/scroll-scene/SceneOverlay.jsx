@@ -17,8 +17,16 @@ const placement = {
   center: 'items-end pb-24 sm:pb-28',
 }
 
+const SCRIM_TONE = 'from-ink-950/85 via-ink-950/45 to-transparent'
+const scrim = {
+  left: `bg-gradient-to-t md:bg-gradient-to-r md:to-55% ${SCRIM_TONE}`,
+  right: `bg-gradient-to-t md:bg-gradient-to-l md:to-55% ${SCRIM_TONE}`,
+  center: `bg-gradient-to-t ${SCRIM_TONE}`,
+}
+
 export default function SceneOverlay({ subscribe, sections, showSectionActions = false }) {
   const items = useRef([])
+  const scrims = useRef([])
   const outroEls = useRef({ eyebrow: null, title: [], body: null, cta: null })
 
   useEffect(
@@ -44,6 +52,9 @@ export default function SceneOverlay({ subscribe, sections, showSectionActions =
 
         const o = sceneConfig.outro
         const t = clamp((p - o.from) / (o.to - o.from), 0, 1)
+
+        for (const el of scrims.current) if (el) el.style.opacity = 1 - t
+
         const els = outroEls.current
         if (els.eyebrow) els.eyebrow.style.color = mixHex(o.eyebrow[0], o.eyebrow[1], t)
         els.title.forEach((el, i) => {
@@ -72,7 +83,15 @@ export default function SceneOverlay({ subscribe, sections, showSectionActions =
           className={`absolute inset-0 flex will-change-[opacity,transform] ${placement[s.align] ?? placement.left}`}
           style={{ opacity: 0, pointerEvents: 'none' }}
         >
-          <div className={`container-page flex flex-col ${alignment[s.align] ?? alignment.left}`}>
+          <div
+            aria-hidden="true"
+            ref={(el) => {
+              scrims.current[i] = el
+            }}
+            className={`absolute inset-0 ${scrim[s.align] ?? scrim.left}`}
+          />
+
+          <div className={`container-page relative flex flex-col ${alignment[s.align] ?? alignment.left}`}>
             <p
               className="eyebrow-on-dark"
               ref={(el) => {

@@ -1,0 +1,16 @@
+{
+  "name": "forklift-model-build",
+  "private": true,
+  "type": "module",
+  "description": "URDF OBJ 링크 -> 히어로용 단일 GLB 변환 (일회성 빌드 도구)",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": {
+    "@gltf-transform/core": "^4.2.1",
+    "@gltf-transform/extensions": "^4.2.1",
+    "@gltf-transform/functions": "^4.2.1",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^0.24.0",
+    "obj2gltf": "^3.1.6",
+    "sharp": "^0.34.4"
+  }
+}

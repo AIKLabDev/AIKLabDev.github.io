@@ -1,5 +1,10 @@
 import { ContactShadows, Environment, Grid, Lightformer } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
+import { useRef } from 'react'
 import { sceneConfig } from '../../data/scrollScene'
+import { getGroundFlow, setGroundPeriod } from '../../lib/groundFlow'
+
+setGroundPeriod(sceneConfig.lighting.grid.cellSize, sceneConfig.lighting.grid.sectionSize)
 
 export default function SceneStage({ compact = false }) {
   const L = sceneConfig.lighting
@@ -43,6 +48,16 @@ export default function SceneStage({ compact = false }) {
         shadow-camera-bottom={-k.shadowRadius}
         shadow-bias={k.shadowBias}
       />
+      {!compact && (
+        <ContactShadows
+          position={[0, 0.002, 0]}
+          opacity={L.contactShadows.opacity}
+          scale={L.contactShadows.scale}
+          blur={L.contactShadows.blur}
+          far={L.contactShadows.far}
+          resolution={L.contactShadows.resolution}
+        />
+      )}
 
       <directionalLight position={L.fill.position} intensity={L.fill.intensity} color={L.fill.color} />
 
@@ -50,7 +65,7 @@ export default function SceneStage({ compact = false }) {
         <directionalLight key={i} position={r.position} intensity={r.intensity} color={r.color} />
       ))}
 
-      <Grid
+      <FlowingGrid
         position={[0, 0.001, 0]}
         args={[40, 40]}
         cellSize={g.cellSize}
@@ -65,16 +80,23 @@ export default function SceneStage({ compact = false }) {
         followCamera={false}
       />
 
-      {!compact && (
-        <ContactShadows
-          position={[0, 0.002, 0]}
-          opacity={L.contactShadows.opacity}
-          scale={L.contactShadows.scale}
-          blur={L.contactShadows.blur}
-          far={L.contactShadows.far}
-          resolution={L.contactShadows.resolution}
-        />
-      )}
     </>
   )
+}
+
+/**
+ * 바닥 격자. 트레드밀 무대에서는 지게차 대신 이쪽이 흐른다.
+ *
+ * 격자는 주기적이라 **한 주기의 정수배만큼 옮기면 옮기기 전과 완전히 같다.**
+ * 그래서 흐른 거리를 주기로 나눈 나머지만 위치에 넣으면 되고, 아무리 오래
+ * 흘려도 정밀도가 무너지거나 이음매가 생기지 않는다.
+ */
+function FlowingGrid(props) {
+  const grid = useRef(null)
+
+  useFrame(() => {
+    if (grid.current) grid.current.position.x = -getGroundFlow()
+  })
+
+  return <Grid ref={grid} {...props} />
 }

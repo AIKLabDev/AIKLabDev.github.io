@@ -1,11 +1,10 @@
 import { scrollSections } from '../../data/scrollScene'
+import { clamp, smoothstep } from '../../lib/math'
 import { createCameraPath } from './cameraPath'
 
-// vh 는 다음 섹션까지의 거리다. 섹션이 n 개면 간격은 n-1 개.
 const gaps = scrollSections.slice(0, -1).map((s) => s.vh)
 export const totalVh = gaps.reduce((a, b) => a + b, 0)
 
-// at[0] = 0, at[n-1] = 1
 let cursor = 0
 const ats = scrollSections.map((_, i) => {
   if (i === 0) return 0
@@ -25,3 +24,13 @@ export const sections = scrollSections.map((s, i) => ({
 }))
 
 export const cameraPath = createCameraPath(sections)
+
+export function sectionBlend(p) {
+  let index = 0
+  while (index < sections.length - 2 && p > sections[index + 1].at) index++
+
+  const a = sections[index].at
+  const b = sections[Math.min(index + 1, sections.length - 1)].at
+  const span = b - a
+  return { index, t: smoothstep(span <= 0 ? 0 : clamp((p - a) / span, 0, 1)) }
+}

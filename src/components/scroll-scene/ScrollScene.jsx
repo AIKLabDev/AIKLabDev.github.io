@@ -9,7 +9,6 @@ import {
   VARIANT_STORAGE_KEY,
   heroVariants,
   sceneConfig,
-  scrollModel,
 } from '../../data/scrollScene'
 import { useIsCompact, useReducedMotion } from '../../hooks/useMediaQuery'
 import { mixHex } from '../../lib/color'
@@ -23,15 +22,13 @@ import { reportExposure, resolveVariant } from '../../lib/abTest'
 import { isWebGLAvailable } from '../../lib/webgl'
 import Hero from '../Hero'
 import CameraRig from './CameraRig'
-import PlaceholderModel from './PlaceholderModel'
+import HeroScene from './HeroScene'
 import SceneLoader from './SceneLoader'
-import SceneModel from './SceneModel'
 import SceneOverlay from './SceneOverlay'
 import SceneProgress from './SceneProgress'
 import SceneStage from './SceneStage'
-import { cameraPath, sections, totalVh } from './sectionPlan'
+import { cameraPath, sectionBlend, sections, totalVh } from './sectionPlan'
 
-const Subject = scrollModel.path ? SceneModel : PlaceholderModel
 const VARIANT_KEYS = Object.keys(heroVariants)
 
 export default function ScrollScene() {
@@ -65,7 +62,6 @@ function ScrollCanvas() {
   const [firstFrame, setFirstFrame] = useState(false)
   const { progress, subscribe } = useScrollProgress(outer, sticky)
 
-  // 브라우저 스크롤 복원은 마운트 뒤에 일어나므로 window.scrollY 대신 저장값을 본다
   const [showLoader] = useState(() => !window.location.hash && readLastScroll() < window.innerHeight * 0.5)
 
   useEffect(() => {
@@ -100,7 +96,6 @@ function ScrollCanvas() {
 
   useSectionSnap({ enabled: variant.snap, outerRef: outer, stickyRef: sticky, sections })
 
-  // StrictMode 가 effect 를 두 번 실행하므로 ref 로 한 번만 쏜다
   const reported = useRef(false)
   useEffect(() => {
     if (reported.current) return
@@ -123,7 +118,6 @@ function ScrollCanvas() {
   useEffect(
     () =>
       subscribe((p) => {
-        // 진행률이 ref 로만 흐르므로 frameloop 'never' 일 때 그릴 계기를 만들어 준다
         invalidate()
 
         const { from, to, background } = sceneConfig.outro
@@ -143,7 +137,6 @@ function ScrollCanvas() {
     <section
       ref={outer}
       data-hero-variant={variantKey}
-      // -mt 는 헤더 높이(h-16 / lg:h-20)와 짝이다
       className="relative isolate -mt-16 bg-ink-950 lg:-mt-20"
       style={{ height: `${totalVh}svh` }}
       onClick={handleAnchorClick}
@@ -152,22 +145,22 @@ function ScrollCanvas() {
         <div ref={chrome} className="absolute inset-0 bg-ink-950">
           <Canvas
             frameloop={inView ? 'always' : 'never'}
-            shadows={!compact}
+            shadows={compact ? false : 'percentage'}
             dpr={[1, compact ? 1.25 : 1.75]}
             performance={{ min: 0.5 }}
             gl={{ antialias: !compact, powerPreference: 'high-performance' }}
             camera={{
               fov: cameraPath.firstKeyframe.fov,
               near: 0.1,
-              far: 120,
+              far: 220,
               position: cameraPath.firstKeyframe.position,
             }}
           >
             <PerformanceMonitor />
             <AdaptiveDpr pixelated />
+            <SceneStage compact={compact} />
             <Suspense fallback={null}>
-              <SceneStage compact={compact} />
-              <Subject progress={progress} sections={sections} />
+              <HeroScene progress={progress} blend={sectionBlend} sections={sections} compact={compact} />
               <Preload all />
             </Suspense>
             <CameraRig progress={progress} path={cameraPath} compact={compact} />
@@ -176,11 +169,11 @@ function ScrollCanvas() {
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/80 via-ink-950/5 to-ink-950/85"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/48 via-transparent to-ink-950/55"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(5,16,31,0.7)_100%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgba(5,16,31,0.4)_100%)]"
           />
 
           <SceneProgress subscribe={subscribe} sections={sections} />
