@@ -1,22 +1,6 @@
 /**
  * aik-forklift-urdf(OBJ + MTL + URDF) -> 웹 히어로용 단일 GLB.
- *
  *   node build.mjs
- *
- * 왜 필요한가: 전달 패키지는 base_link.obj 하나가 19MB, 전체 52MB 다.
- * 첫 화면에 얹을 수 있는 크기가 아니라 링크별 OBJ 를 합쳐 압축한다.
- *
- * 하는 일
- *  1. MTL 정리 — `-clamp on` 플래그 제거, map_Bump 제거(전부 회색 노이즈 4MB)
- *  2. 링크별 OBJ -> glTF (obj2gltf)
- *  3. 링크별 최적화 — 재질 dedup -> palette -> join(드로우콜 축소) -> simplify
- *  4. URDF 조인트 계층으로 노드를 엮어 하나의 문서로 병합
- *  5. 텍스처 webp 축소 + Draco 압축 -> public/models/forklift.glb
- *  6. 런타임이 쓸 조인트/치수표를 rig.generated.js 로 뽑는다
- *
- * 좌표계는 URDF 그대로(Z-up) 둔다. Y-up 변환은 씬에서 루트 그룹 한 번의
- * 회전으로 처리한다 — 여기서 굽는 것보다 조인트 축을 URDF 값 그대로 읽을 수 있어
- * 대조하기 쉽다.
  */
 import { Document, NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
@@ -59,10 +43,12 @@ const LINKS = [
   { name: 'steering_handle_link', ratio: 0.5, error: 0.002 },
 ]
 
-/** 화물 소품. 런타임이 복제해서 팔레트를 만든다. */
+/** 소품. 런타임이 복제해서 화물·적재 설비를 만든다. */
 const PROPS = [
   { name: 'prop_pallet', file: 'props/pallet.obj', ratio: 1 },
   { name: 'prop_box', file: 'props/box.obj', ratio: 1 },
+  { name: 'prop_truck', file: 'environment/loading_truck.obj', ratio: 0.35, error: 0.006 },
+  { name: 'prop_rack', file: 'environment/rack_unit.obj', ratio: 1 },
 ]
 
 const log = (...args) => console.log('[forklift]', ...args)
@@ -71,11 +57,7 @@ const log = (...args) => console.log('[forklift]', ...args)
 /* URDF                                                                */
 /* ------------------------------------------------------------------ */
 
-/**
- * URDF 를 읽어 조인트 표를 만든다.
- * 정규식 파서인 이유는 이 파일이 고정된 한 개이고 스키마가 얕아서다 —
- * XML 파서를 하나 더 들이는 것보다 여기서 끝내는 편이 읽기 쉽다.
- */
+/** URDF 를 정규식으로 파싱한다 — 고정된 파일 하나라 XML 파서를 들일 필요가 없다 */
 async function readUrdf() {
   const xml = await fs.readFile(path.join(DELIVERY, 'urdf/forklift.urdf'), 'utf8')
   const num = (s, fallback) => {
@@ -133,7 +115,7 @@ async function prepareSources() {
   await fs.rm(WORK, { recursive: true, force: true })
   await fs.cp(path.join(DELIVERY, 'meshes'), WORK, { recursive: true })
 
-  for (const dir of [WORK, path.join(WORK, 'props')]) {
+  for (const dir of [WORK, path.join(WORK, 'props'), path.join(WORK, 'environment')]) {
     for (const file of await fs.readdir(dir)) {
       if (!file.endsWith('.mtl')) continue
       const p = path.join(dir, file)
@@ -142,9 +124,18 @@ async function prepareSources() {
         .replace(/^(\s*map_Kd\s+)-clamp\s+on\s+/gim, '$1')
         // 범프맵은 전부 회색 노이즈다. 4MB 를 먹고 실루엣에는 기여하지 않는다.
         .replace(/^\s*(?:map_Bump|bump|norm)\s+.*$/gim, '')
+        // 랙은 같은 텍스처가 바이트만 다른 사본 셋으로 갈려 있다. dedup 이 못 잡는다
+        .replace(/(standing_shelf_[\w.]*?)\.jpg(_2)?\.png/gi, '$1.png')
       await fs.writeFile(p, text)
     }
   }
+
+  // 랙은 같은 재질이 이름만 다른 셋으로 갈려 있어 join 이 프리미티브를 못 합친다
+  const rack = path.join(WORK, 'environment/rack_unit.obj')
+  await fs.writeFile(
+    rack,
+    (await fs.readFile(rack, 'utf8')).replace(/^usemtl\s+metal_shelf_rack_\d+/gim, 'usemtl metal_shelf_rack_1'),
+  )
 }
 
 /** OBJ 의 축정렬 바운딩박스 (치수표를 소스에서 직접 뽑기 위해) */
@@ -221,10 +212,7 @@ async function convertPart({ name, file, ratio, error = 0.002 }) {
 /* 조립                                                                 */
 /* ------------------------------------------------------------------ */
 
-/**
- * 링크 문서를 본 문서로 병합하고, 그 씬의 자식들을 담은 노드 하나를 돌려준다.
- * merge() 는 씬까지 같이 들여오므로 자식을 옮긴 뒤 빈 씬은 버린다.
- */
+/** 링크 문서를 본 문서로 병합하고, 그 씬의 자식들을 담은 노드 하나를 돌려준다 */
 function mergeAsNode(main, part, nodeName) {
   const map = mergeDocuments(main, part)
   const holder = main.createNode(nodeName)
@@ -261,8 +249,7 @@ async function build() {
   }
 
   /* --- 조인트 계층 --- */
-  // 각 조인트는 origin 노드(URDF 의 고정 오프셋) + motion 노드(런타임이 움직이는 곳)
-  // 두 겹으로 만든다. 런타임은 motion 노드만 건드리므로 원점이 오염되지 않는다.
+  // origin 노드(고정 오프셋) + motion 노드(런타임이 움직임) 두 겹 — 런타임이 origin 을 건드리지 않는다
   const childLinks = new Set()
   for (const joint of urdf.joints) {
     const origin = main.createNode(`${joint.name}__origin`)
@@ -306,10 +293,16 @@ async function build() {
 /* 런타임용 치수표                                                       */
 /* ------------------------------------------------------------------ */
 
+const extentBlock = (name, b) => `export const ${name} = {
+  size: [${[0, 1, 2].map((i) => (b.max[i] - b.min[i]).toFixed(4)).join(', ')}],
+  min: [${b.min.map((v) => v.toFixed(4)).join(', ')}],
+}
+`
+
 async function writeRig(urdf) {
   const bounds = Object.fromEntries(
     await Promise.all(
-      [...LINKS.map((l) => `${l.name}.obj`), 'props/pallet.obj', 'props/box.obj'].map(async (f) => [
+      [...LINKS.map((l) => `${l.name}.obj`), ...PROPS.map((p) => p.file)].map(async (f) => [
         f,
         await objBounds(f),
       ]),
@@ -322,8 +315,7 @@ async function writeRig(urdf) {
   const frontRadius = (bounds['front_left_wheel_link.obj'].max[1] - bounds['front_left_wheel_link.obj'].min[1]) / 2
   const rearRadius = (bounds['rear_left_wheel_link.obj'].max[1] - bounds['rear_left_wheel_link.obj'].min[1]) / 2
 
-  // 바퀴가 바닥에 닿도록 base_link 를 띄우는 높이. 앞뒤 중 더 큰 값을 쓴다
-  // (작은 쪽을 쓰면 한쪽 바퀴가 바닥을 파고든다).
+  // 앞뒤 중 더 큰 값 — 작은 쪽을 쓰면 반대쪽 바퀴가 바닥을 파고든다
   const rideHeight = Math.max(
     frontRadius - joint('front_left_wheel_joint').xyz[2],
     rearRadius - joint('rear_left_steering_joint').xyz[2],
@@ -378,11 +370,7 @@ export const forkLift = {
   /** 캐리지 앞면 / 포크 끝 (차량 좌표 X). 팔레트 진입 깊이가 여기서 나온다. */
   backrestX: ${backrestX.toFixed(6)},
   tineTipX: ${tineTipX.toFixed(6)},
-  /**
-   * 포크 두 갈래의 Y 중심. 포크가 차체 중앙에 있지 않아서(좌측으로 치우쳐 있다)
-   * 팔레트도 같은 만큼 옆으로 놓여야 갈래가 슬롯에 들어간다.
-   * 값은 전달 패키지 데모(threejs_demo/app.js 의 FORK_TINES)에서 가져왔다.
-   */
+  /** 포크 두 갈래의 Y 중심. threejs_demo/app.js 의 FORK_TINES 에서 가져왔다. */
   tineCenterY: -0.092357,
 }
 
@@ -395,7 +383,9 @@ export const palletProp = {
 export const boxProp = {
   size: [${[0, 1, 2].map((i) => (bounds['props/box.obj'].max[i] - bounds['props/box.obj'].min[i]).toFixed(4)).join(', ')}],
 }
-`
+
+${extentBlock('truckProp', bounds['environment/loading_truck.obj'])}
+${extentBlock('rackProp', bounds['environment/rack_unit.obj'])}`
   await fs.mkdir(path.dirname(OUT_RIG), { recursive: true })
   await fs.writeFile(OUT_RIG, rig)
   log(`wrote ${path.relative(UI, OUT_RIG)}`)

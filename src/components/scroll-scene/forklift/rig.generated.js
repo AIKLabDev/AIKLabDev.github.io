@@ -136,11 +136,7 @@ export const forkLift = {
   /** 캐리지 앞면 / 포크 끝 (차량 좌표 X). 팔레트 진입 깊이가 여기서 나온다. */
   backrestX: -0.870071,
   tineTipX: 0.435998,
-  /**
-   * 포크 두 갈래의 Y 중심. 포크가 차체 중앙에 있지 않아서(좌측으로 치우쳐 있다)
-   * 팔레트도 같은 만큼 옆으로 놓여야 갈래가 슬롯에 들어간다.
-   * 값은 전달 패키지 데모(threejs_demo/app.js 의 FORK_TINES)에서 가져왔다.
-   */
+  /** 포크 두 갈래의 Y 중심. threejs_demo/app.js 의 FORK_TINES 에서 가져왔다. */
   tineCenterY: -0.092357,
 }
 
@@ -152,4 +148,14 @@ export const palletProp = {
 
 export const boxProp = {
   size: [0.5090, 0.4083, 0.3500],
+}
+
+export const truckProp = {
+  size: [3.1239, 6.6326, 2.8384],
+  min: [-1.5619, -3.3163, -0.0003],
+}
+
+export const rackProp = {
+  size: [0.7971, 5.1190, 2.3023],
+  min: [-0.3986, -2.5595, 0.0000],
 }

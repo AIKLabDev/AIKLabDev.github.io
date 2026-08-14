@@ -169,11 +169,11 @@ function ScrollCanvas() {
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/48 via-transparent to-ink-950/55"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-950/18 via-transparent to-ink-950/24"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_48%,rgba(5,16,31,0.4)_100%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_66%,rgba(5,16,31,0.12)_100%)]"
           />
 
           <SceneProgress subscribe={subscribe} sections={sections} />

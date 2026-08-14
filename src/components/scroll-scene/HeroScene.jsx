@@ -1,8 +1,9 @@
 import { useGLTF } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
-import { scrollModel } from '../../data/scrollScene'
+import { scrollModel, sceneConfig } from '../../data/scrollScene'
 import { resetGroundFlow, setGroundFlow } from '../../lib/groundFlow'
+import { lerp } from '../../lib/math'
 import { buildLibrary, setStageOpacity } from './forklift/model'
 import { createJourneyStage } from './stages/journeyStage'
 
@@ -12,11 +13,12 @@ const BUILDERS = {
   journey: createJourneyStage,
 }
 
+const F = sceneConfig.lighting.fog
+
 const weights = new Map()
 const beats = new Map()
 
-// 두 장이 같은 무대·같은 연출을 가리키면 가중치는 **더한다**. 큰 쪽만 쓰면
-// 전환 한가운데에서 0.5 가 되어, 계속 보여야 할 무대가 반투명해진다.
+// 가중치는 더한다 — max 를 쓰면 전환 중간에 무대가 반투명해진다
 const add = (sections, i, w) => {
   const s = sections[i]
   if (!s || w <= 0) return
@@ -38,15 +40,21 @@ export default function HeroScene({ progress, blend, sections, compact = false }
     })
   }, [library, sections, compact])
 
+  // 안개는 SceneStage 의 것이라 이 컴포넌트가 빠질 때 밀어낸 채로 두면 안 된다
+  const root = useThree((s) => s.scene)
   useEffect(
     () => () => {
       for (const stage of stages) disposeStage(stage.group)
       resetGroundFlow()
+      if (root.fog) {
+        root.fog.near = F.near
+        root.fog.far = F.far
+      }
     },
-    [stages],
+    [stages, root],
   )
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1)
     const { index, t } = blend(progress.current)
 
@@ -56,16 +64,28 @@ export default function HeroScene({ progress, blend, sections, compact = false }
     add(sections, index + 1, t)
 
     let flow = 0
+    let lift = 0
     for (const stage of stages) {
       const weight = Math.min(1, weights.get(stage.name) ?? 0)
+      // 위치를 먼저 갱신하고 불투명도를 입힌다 — 순서를 바꾸면 한 프레임 깜빡인다
+      if (weight > 0) stage.update(dt, beats)
       setStageOpacity(stage.group, weight)
       if (weight <= 0) continue
 
-      stage.update(dt, beats)
-      flow = Math.max(flow, stage.flowSpeed * weight)
+      // 후진하면 바닥도 되돌아와야 한다 — 부호를 지운 최대값은 세계만 멈춰 세운다
+      const speed = stage.flowSpeed * weight
+      if (Math.abs(speed) > Math.abs(flow)) flow = speed
+      if (stage.fogLift > lift) lift = stage.fogLift
     }
 
     setGroundFlow(flow * dt)
+
+    // 유니폼이라 매 프레임 옮겨도 셰이더가 다시 컴파일되지 않는다
+    const fog = state.scene.fog
+    if (fog) {
+      fog.near = lerp(F.near, F.lift[0], lift)
+      fog.far = lerp(F.far, F.lift[1], lift)
+    }
   })
 
   return (

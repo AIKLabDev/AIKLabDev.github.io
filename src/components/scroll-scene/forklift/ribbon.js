@@ -58,11 +58,8 @@ function ribbonMesh(count, style, z) {
   return mesh
 }
 
-/**
- * 매 프레임 다시 그리는 띠. 경로가 주행 중에 휘므로 모양을 미리 구울 수 없다.
- * 호출부가 `points` 를 직접 채운 뒤 `commit()` 을 부른다.
- */
-export function createFlowRibbon(count, style, z = 0.012) {
+/** 매 프레임 다시 그리는 띠. 호출부가 `points` 를 채운 뒤 `commit()` 을 부른다. */
+export function createFlowRibbon(count, style, z = 0.012, taper = 0) {
   const points = Array.from({ length: count }, () => [0, 0])
   const mesh = ribbonMesh(count, style, z)
   // 정점이 매 프레임 움직인다 — 경계구를 다시 재는 값보다 그냥 켜두는 쪽이 싸다
@@ -70,7 +67,7 @@ export function createFlowRibbon(count, style, z = 0.012) {
 
   mesh.userData.points = points
   mesh.userData.commit = () => {
-    fillRibbon(points, style.width, mesh.geometry.attributes.position.array)
+    fillRibbon(points, style.width, mesh.geometry.attributes.position.array, taper)
     mesh.geometry.attributes.position.needsUpdate = true
   }
   return mesh

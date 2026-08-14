@@ -17,7 +17,7 @@ const placement = {
   center: 'items-end pb-24 sm:pb-28',
 }
 
-const SCRIM_TONE = 'from-ink-950/85 via-ink-950/45 to-transparent'
+const SCRIM_TONE = 'from-ink-950/62 via-ink-950/28 to-transparent'
 const scrim = {
   left: `bg-gradient-to-t md:bg-gradient-to-r md:to-55% ${SCRIM_TONE}`,
   right: `bg-gradient-to-t md:bg-gradient-to-l md:to-55% ${SCRIM_TONE}`,
