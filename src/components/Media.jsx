@@ -74,59 +74,10 @@ function ClipVideo({ src, poster, caption }) {
   )
 }
 
-function PalletizingDiagram() {
-  const nodes = [
-    { x: 24, label: 'MoveIt', sub: '모션 계획' },
-    { x: 156, label: 'ROS2 Bridge', sub: '커스텀 브리지 패키지' },
-  ]
-  return (
-    <div className="grid size-full place-items-center bg-gradient-to-br from-ink-800 via-ink-900 to-ink-950 p-4">
-      <svg viewBox="0 0 420 200" className="h-full w-full max-w-[420px]" role="img" aria-label="Sim-to-Real 브리지 구조 다이어그램">
-        <defs>
-          <marker id="arw" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M0 0 8 4 0 8z" fill="#38bdf8" />
-          </marker>
-        </defs>
-
-        {nodes.map((n) => (
-          <g key={n.label}>
-            <rect x={n.x} y="78" width="112" height="44" rx="7" fill="#38bdf8" fillOpacity="0.1" stroke="#38bdf8" strokeOpacity="0.45" />
-            <text x={n.x + 56} y="97" textAnchor="middle" className="fill-white text-[11px] font-semibold">
-              {n.label}
-            </text>
-            <text x={n.x + 56} y="111" textAnchor="middle" className="fill-sky-300/70 text-[8.5px]">
-              {n.sub}
-            </text>
-          </g>
-        ))}
-
-        <path d="M268 92 Q296 92 296 56 L318 56" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
-        <path d="M268 108 Q296 108 296 144 L318 144" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
-        <path d="M136 100 L150 100" fill="none" stroke="#38bdf8" strokeOpacity="0.5" strokeWidth="1.4" markerEnd="url(#arw)" />
-
-        <g>
-          <rect x="326" y="36" width="76" height="40" rx="7" fill="#ffffff" fillOpacity="0.08" stroke="#ffffff" strokeOpacity="0.3" strokeDasharray="3 2.5" />
-          <text x="364" y="54" textAnchor="middle" className="fill-white text-[10.5px] font-semibold">Isaac Sim</text>
-          <text x="364" y="66" textAnchor="middle" className="fill-white/55 text-[8px]">디지털 트윈</text>
-        </g>
-        <g>
-          <rect x="326" y="124" width="76" height="40" rx="7" fill="#ffffff" fillOpacity="0.08" stroke="#ffffff" strokeOpacity="0.3" />
-          <text x="364" y="142" textAnchor="middle" className="fill-white text-[10.5px] font-semibold">실물 로봇</text>
-          <text x="364" y="154" textAnchor="middle" className="fill-white/55 text-[8px]">6축 매니퓰레이터</text>
-        </g>
-
-        <path d="M364 80 L364 120" fill="none" stroke="#94a3b8" strokeOpacity="0.45" strokeWidth="1.1" strokeDasharray="3 3" />
-        <text x="372" y="103" className="fill-slate-300/70 text-[7.5px]">JointState 동기화</text>
-      </svg>
-    </div>
-  )
-}
-
 export function MediaRaw({ item }) {
   const { kind, src, poster, caption } = item
   if (kind === 'loop') return <LoopVideo src={src} poster={poster} caption={caption} />
   if (kind === 'clip') return <ClipVideo src={src} poster={poster} caption={caption} />
   if (kind === 'image') return <img src={src} alt={caption ?? ''} loading="lazy" className="size-full object-cover" />
-  if (kind === 'diagram') return <PalletizingDiagram />
   return null
 }
