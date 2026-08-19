@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Link } from 'react-router'
 import { sceneConfig } from '../../data/scrollScene'
 import { mixHex } from '../../lib/color'
 import { clamp, rangeProgress } from '../../lib/math'
@@ -139,8 +140,12 @@ export default function SceneOverlay({ subscribe, sections, showSectionActions =
                     >
                       {a.label}
                     </a>
-                  ) : (
+                  ) : a.href.startsWith('#') ? (
                     <Button key={a.href} href={a.href} variant={a.variant} size="lg">
+                      {a.label}
+                    </Button>
+                  ) : (
+                    <Button key={a.href} as={Link} to={a.href} variant={a.variant} size="lg">
                       {a.label}
                     </Button>
                   ),

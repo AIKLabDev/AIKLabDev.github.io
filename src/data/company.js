@@ -12,7 +12,7 @@ export const company = {
   facts: [
     { label: '설립', value: '2003년' },
     { label: '본사', value: '경기도 수원시' },
-    { label: '기업부설연구소', value: '경기도 용인시' },
+    { label: '기업부설연구소', value: '경기도 수원시' },
     { label: '주요 사업', value: '산업 설비 · 공정 장비 · 로봇 자동화 시스템' },
     { label: '로봇 테스트 환경', value: 'AMR · 실물 지게차 · 산업용 매니퓰레이터 · 3D 비전 시스템' },
   ],

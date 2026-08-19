@@ -7,8 +7,8 @@ export const jobs = [
     subtitle: 'AMR · 산업용 지게차',
     type: '연구직',
     employment: '정규직',
-    experience: '경력 3년 이상',
-    location: '경기도 용인',
+    experience: '경력',
+    location: '경기도 수원',
     deadline: '채용 시 마감',
     summary: [
       '산업용 지게차와 AMR이 창고와 공장에서 스스로 이동하도록 자율주행 시스템을 개발합니다.',
@@ -47,8 +47,8 @@ export const jobs = [
     subtitle: 'Isaac Sim · 디지털 트윈',
     type: '연구직',
     employment: '정규직',
-    experience: '신입·경력',
-    location: '경기도 용인',
+    experience: '경력',
+    location: '경기도 수원',
     deadline: '채용 시 마감',
     summary: [
       '실제 로봇과 작업 환경을 가상 공간에 구현하고, 실물 장비를 제작하거나 현장에 투입하기 전에 로봇의 동작을 검증합니다.',
@@ -86,8 +86,8 @@ export const jobs = [
     subtitle: '팔레타이징 · 3D 비전',
     type: '연구직',
     employment: '정규직',
-    experience: '경력 2년 이상',
-    location: '경기도 용인',
+    experience: '경력',
+    location: '경기도 수원',
     deadline: '채용 시 마감',
     summary: [
       '산업용 로봇이 제품을 인식하고 집어 올려 팔레트에 적재하는 전 과정을 개발합니다.',

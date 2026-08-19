@@ -131,7 +131,7 @@ export const scrollSections = [
     align: 'left',
     vh: 95,
     camera: { position: [2.19, 2.32, 5.54], target: [-1.52, 0.95, 0.25], fov: 34 },
-    action: { label: '회사 알아보기', href: '#what-we-do' },
+    action: { label: '더 알아보기', href: '#what-we-do' },
   },
   {
     id: 'perception',
@@ -143,7 +143,6 @@ export const scrollSections = [
     align: 'right',
     vh: 95,
     camera: { position: [-17.3, 20.4, 0], target: [2.5, 0.6, 0], fov: 46 },
-    action: { label: '하는 일 보기', href: '#what-we-do' },
   },
   {
     id: 'planning',
@@ -167,7 +166,6 @@ export const scrollSections = [
     align: 'right',
     vh: 105,
     camera: { position: [-13, 9, 15], target: [8, 1.6, 0.5], fov: 44 },
-    action: { label: '프로젝트 보기', href: '#projects' },
   },
   {
     id: 'fleet',
@@ -179,7 +177,7 @@ export const scrollSections = [
     align: 'center',
     vh: 95,
     camera: { position: [26, 45.5, 39], target: [26, 0.5, 10.5], fov: 58, frame: [0, 0.185] },
-    action: { label: '프로젝트 보기', href: '#projects' },
+    action: { label: 'Projects', href: '#projects' },
   },
   {
     id: 'join',
@@ -191,8 +189,8 @@ export const scrollSections = [
     align: 'center',
     camera: { position: [26, 49.8, 42.4], target: [26, 0.5, 10.5], fov: 58 },
     actions: [
-      { label: '채용 공고 보기', href: '#positions', variant: 'primary' },
-      { label: '회사 알아보기', href: '#what-we-do', variant: 'outlineDark', outroTinted: true },
+      { label: '채용 공고 보기', href: '/jobs', variant: 'primary' },
+      { label: '더 알아보기', href: '#what-we-do', variant: 'outlineDark', outroTinted: true },
     ],
   },
 ]

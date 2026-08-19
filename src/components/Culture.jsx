@@ -31,7 +31,7 @@ export default function Culture() {
     <Section id="culture">
       <SectionHead
         size="md"
-        eyebrow="Careers at AIKOREA"
+        eyebrow="RND at AIKOREA"
         title="함께 성장하며 새로운 가능성을 만들어갑니다."
       />
 

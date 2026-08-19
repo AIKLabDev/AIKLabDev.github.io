@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Button } from './ui'
 import { handleAnchorClick } from '../lib/anchorScroll'
 
@@ -35,11 +36,11 @@ export default function Hero() {
           </div>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Button href="#positions" variant="onDark" size="lg">
+            <Button as={Link} to="/jobs" variant="onDark" size="lg">
               채용 공고 보기
             </Button>
             <Button href="#what-we-do" onClick={handleAnchorClick} variant="outlineDark" size="lg">
-              회사 알아보기
+              더 알아보기
             </Button>
           </div>
         </div>

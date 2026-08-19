@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router'
 import Icon from '../components/Icon'
 import { ArrowLink, Badge, Button, Meta, Tag } from '../components/ui'
 import { hiringProcess, jobs } from '../data/jobs'
-import { site } from '../data/site'
 
 function Requirements({ title, items, accent = false }) {
   return (
@@ -117,19 +116,25 @@ export default function JobDetail() {
             <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card">
               <h2 className="text-sm font-bold text-ink-900">지원하기</h2>
               <p className="mt-3 text-[0.8125rem] leading-relaxed text-ink-900/60">
-                이력서와 포트폴리오를 채용 담당자 이메일로 보내주세요.
+                이메일 지원 접수를 일시적으로 운영하지 않습니다.
               </p>
               <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-900/60">
-                메일 제목에 지원하는 포지션을 적어주시면 확인에 도움이 됩니다.
+                빠른 시일 내 정상화하여 다시 안내해 드리겠습니다.
               </p>
-              <Button
-                href={`mailto:${site.email}?subject=${encodeURIComponent(`[지원] ${job.title}`)}`}
-                className="mt-5 w-full"
-              >
+              <Button as="span" className="mt-5 w-full cursor-not-allowed opacity-50" aria-disabled="true">
                 <Icon name="mail" className="size-4.5" strokeWidth={1.8} />
-                이 포지션에 지원하기
+                이메일 지원 일시 중단
               </Button>
-              <p className="mt-3 text-center font-mono text-xs text-ink-900/45">{site.email}</p>
+              <Button
+                as="a"
+                href="https://www.saramin.co.kr/zf_user/company-info/view-inner-recruit?csn=UVN5MnlZSDRkcHhGeWgyV0dKTVpmZz09"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 w-full"
+              >
+                지원하기
+                <Icon name="arrowUpRight" className="size-4.5" strokeWidth={1.8} />
+              </Button>
             </div>
 
             <div className="mt-5 rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card">

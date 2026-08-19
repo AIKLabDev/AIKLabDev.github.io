@@ -106,7 +106,7 @@ export default function Header() {
             ref={dividerRef}
             className="hidden border-l border-ink-900/12 pl-2.5 text-xs font-semibold tracking-wide text-ink-900/45 sm:block"
           >
-            CAREERS
+            RND
           </span>
         </Link>
 

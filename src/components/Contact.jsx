@@ -1,5 +1,4 @@
-import { site } from '../data/site'
-import Icon from './Icon'
+import { Link } from 'react-router'
 import { Button } from './ui'
 
 export default function Contact() {
@@ -20,12 +19,8 @@ export default function Contact() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Button href="#positions" variant="onDark" size="lg">
+            <Button as={Link} to="/jobs" variant="onDark" size="lg">
               채용 공고 보기
-            </Button>
-            <Button href={`mailto:${site.email}`} variant="outlineDark" size="lg">
-              <Icon name="mail" className="size-4.5" strokeWidth={1.8} />
-              지원 문의하기
             </Button>
           </div>
         </div>
