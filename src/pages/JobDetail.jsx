@@ -35,10 +35,10 @@ export default function JobDetail() {
   if (!job) {
     return (
       <div className="container-page py-24 text-center">
-        <h1 className="text-xl font-bold text-ink-900">요청하신 채용 공고를 찾을 수 없습니다.</h1>
-        <p className="mt-3 text-sm text-ink-900/60">공고가 마감됐거나 주소가 변경되었을 수 있습니다.</p>
+        <h1 className="text-xl font-bold text-ink-900">요청하신 역할을 찾을 수 없습니다.</h1>
+        <p className="mt-3 text-sm text-ink-900/60">존재하지 않거나 주소가 변경되었을 수 있습니다.</p>
         <Button as={Link} to="/" className="mt-8">
-          채용 홈으로 돌아가기
+          홈으로 돌아가기
         </Button>
       </div>
     )
@@ -50,13 +50,13 @@ export default function JobDetail() {
         <div className="container-page py-10 sm:py-14">
           <nav className="flex items-center gap-2 text-sm font-medium text-ink-900/55" aria-label="현재 위치">
             <Link to="/" className="hover:text-brand-600">
-              채용 홈
+              AIKOREA
             </Link>
             <span className="text-ink-900/25" aria-hidden="true">
               /
             </span>
             <Link to="/jobs" className="hover:text-brand-600">
-              채용 공고
+              역할
             </Link>
           </nav>
 
@@ -82,7 +82,6 @@ export default function JobDetail() {
               {job.employment} · {job.experience}
             </Meta>
             <Meta icon="pin">{job.location}</Meta>
-            <Meta icon="clock">{job.deadline}</Meta>
           </div>
         </div>
       </div>
@@ -95,7 +94,7 @@ export default function JobDetail() {
             <Requirements title="우대 사항" items={job.preferred} accent />
 
             <div>
-              <h2 className="text-base font-bold text-ink-900">채용 절차</h2>
+              <h2 className="text-base font-bold text-ink-900">합류 과정</h2>
               <ol className="mt-4 space-y-4">
                 {hiringProcess.map((s, i) => (
                   <li key={s.step} className="flex gap-3.5">
@@ -116,21 +115,14 @@ export default function JobDetail() {
             <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-card">
               <h2 className="text-sm font-bold text-ink-900">지원하기</h2>
               <p className="mt-3 text-[0.8125rem] leading-relaxed text-ink-900/60">
-                이메일 지원 접수를 일시적으로 운영하지 않습니다.
+                사람인 채용 공고에서 이력서와 포트폴리오를 제출해 주세요.
               </p>
-              <p className="mt-2 text-[0.8125rem] leading-relaxed text-ink-900/60">
-                빠른 시일 내 정상화하여 다시 안내해 드리겠습니다.
-              </p>
-              <Button as="span" className="mt-5 w-full cursor-not-allowed opacity-50" aria-disabled="true">
-                <Icon name="mail" className="size-4.5" strokeWidth={1.8} />
-                이메일 지원 일시 중단
-              </Button>
               <Button
                 as="a"
                 href="https://www.saramin.co.kr/zf_user/company-info/view-inner-recruit?csn=UVN5MnlZSDRkcHhGeWgyV0dKTVpmZz09"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 w-full"
+                className="mt-5 w-full"
               >
                 지원하기
                 <Icon name="arrowUpRight" className="size-4.5" strokeWidth={1.8} />
@@ -156,7 +148,7 @@ export default function JobDetail() {
                   ))}
               </ul>
               <ArrowLink as={Link} to="/jobs" className="mt-5">
-                전체 공고 보기
+                전체 포지션 보기
               </ArrowLink>
             </div>
           </aside>

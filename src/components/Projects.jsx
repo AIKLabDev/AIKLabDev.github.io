@@ -32,7 +32,7 @@ export default function Projects() {
         eyebrow="Our Projects"
         title="AIKOREA의 주요 프로젝트"
         description="로봇 기술의 가능성을 넓혀 온 AIKOREA의 주요 프로젝트를 만나보세요."
-        action={<ArrowLink href="#positions">관련 포지션 보기</ArrowLink>}
+        action={<ArrowLink href="#positions">하는 일 보기</ArrowLink>}
       />
       <SnapRail
         className="mt-12 lg:mt-14"

@@ -47,30 +47,29 @@ export default function JobList() {
         <div className="container-page py-8 sm:py-10">
           <nav className="flex items-center gap-2 text-[0.8125rem] font-medium text-ink-900/55" aria-label="현재 위치">
             <Link to="/" className="hover:text-brand-600">
-              채용 홈
+              AIKOREA
             </Link>
             <span className="text-ink-900/25" aria-hidden="true">
               /
             </span>
-            <span className="text-ink-900/80">채용 공고</span>
+            <span className="text-ink-900/80">하는 일</span>
           </nav>
 
           <h1 className="mt-4 text-xl font-bold tracking-tight text-ink-900 sm:text-2xl">
-            채용 공고 <span className="font-mono text-base text-brand-600 sm:text-lg">{jobs.length}</span>
+            AIKOREA가 하는 일 <span className="font-mono text-base text-brand-600 sm:text-lg">{groups.length}</span>
           </h1>
           <p className="mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-ink-900/55 sm:text-sm">
-            모든 자격 요건을 충족하지 않더라도, 보유한 경험과 역량이 모집 직무와 연결된다면 적극적으로 지원해
-            주세요.
+            자율주행, 시뮬레이션, 로봇 연구개발이 각자의 문제를 풀며 산업 현장의 자동화를 함께 완성해 나갑니다.
           </p>
         </div>
       </div>
 
       <div className="container-page py-10 sm:py-12">
         {groups.map((g) => (
-          <section key={g.team} className="mt-10 first:mt-0">
-            <h2 className="border-b border-ink-900/12 pb-3 text-xs font-bold tracking-[0.08em] text-brand-600">
-              {g.team}
-            </h2>
+          <section key={g.team} className="mt-14 first:mt-0">
+            <div className="border-b border-ink-900/12 pb-4">
+              <h2 className="text-xs font-bold tracking-[0.08em] text-brand-600">{g.team}</h2>
+            </div>
             <ul>
               {g.items.map((job) => (
                 <JobRow key={job.id} job={job} />

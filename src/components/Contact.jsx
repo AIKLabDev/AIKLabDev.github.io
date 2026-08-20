@@ -20,7 +20,7 @@ export default function Contact() {
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Button as={Link} to="/jobs" variant="onDark" size="lg">
-              채용 공고 보기
+              하는 일 보기
             </Button>
           </div>
         </div>

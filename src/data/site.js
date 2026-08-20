@@ -9,6 +9,6 @@ export const nav = [
   { label: 'Tech', href: '/#what-we-do' },
   { label: 'Projects', href: '/#projects' },
   { label: 'Process', href: '/#how-we-work' },
-  { label: 'Jobs', href: '/#positions' },
+  { label: 'Jobs', href: '/jobs' },
   { label: 'Culture', href: '/#culture' },
 ]

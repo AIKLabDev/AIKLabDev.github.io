@@ -189,7 +189,7 @@ export const scrollSections = [
     align: 'center',
     camera: { position: [26, 49.8, 42.4], target: [26, 0.5, 10.5], fov: 58 },
     actions: [
-      { label: '채용 공고 보기', href: '/jobs', variant: 'primary' },
+      { label: '하는 일 보기', href: '/jobs', variant: 'primary' },
       { label: '더 알아보기', href: '#what-we-do', variant: 'outlineDark', outroTinted: true },
     ],
   },
