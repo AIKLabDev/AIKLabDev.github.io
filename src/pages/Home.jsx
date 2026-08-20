@@ -1,5 +1,5 @@
 import Contact from '../components/Contact'
-import Culture from '../components/Culture'
+// import Culture from '../components/Culture'
 import Jobs from '../components/Jobs'
 import Pipeline from '../components/Pipeline'
 import Projects from '../components/Projects'
@@ -14,7 +14,7 @@ export default function Home() {
       <Projects />
       <Pipeline />
       <Jobs />
-      <Culture />
+{/*       <Culture /> */}
       <Contact />
     </>
   )

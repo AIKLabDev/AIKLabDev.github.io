@@ -10,5 +10,5 @@ export const nav = [
   { label: 'Projects', href: '/#projects' },
   { label: 'Process', href: '/#how-we-work' },
   { label: 'Jobs', href: '/jobs' },
-  { label: 'Culture', href: '/#culture' },
+  // { label: 'Culture', href: '/#culture' },
 ]
